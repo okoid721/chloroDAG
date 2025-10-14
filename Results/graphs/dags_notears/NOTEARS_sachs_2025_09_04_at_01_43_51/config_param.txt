@@ -1,0 +1,4 @@
+dataset_name: sachs
+lambda: None
+loss_type: l2
+model_selector: StablSelec

@@ -1,0 +1,5 @@
+dataset_name: ndhD
+version_EM_implementation: EM_ndhD_pc_2025_09_09_at_23_23_40
+discovery_alg: pc
+estimator_structure: chi-square
+estimator_parameters: BayesianEstimator - K2

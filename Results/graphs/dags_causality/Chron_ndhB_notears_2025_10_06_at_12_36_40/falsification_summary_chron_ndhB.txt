@@ -1,0 +1,11 @@
+Falsification Summary: +-------------------------------------------------------------------------------------------------------+
+|                                         Falsification Summary                                         |
++-------------------------------------------------------------------------------------------------------+
+| The given DAG is informative because 0 / 20 of the permutations lie in the Markov                     |
+| equivalence class of the given DAG (p-value: 0.00).                                                   |
+| The given DAG violates 73/115 LMCs and is better than 45.0% of the permuted DAGs (p-value: 0.55).     |
+| Based on the provided significance level (0.05) and because the DAG is informative,                   |
+| we reject the DAG.                                                                                    |
++-------------------------------------------------------------------------------------------------------+
+DAG is Falsifiable: True
+DAG is Falsified: True

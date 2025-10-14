@@ -1,0 +1,45 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.env
+.venv/
+venv/
+env/
+pip-log.txt
+*.log
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# --- VSCode / PyCharm ---
+.vscode/
+.idea/
+
+# --- Quarto ---
+.quarto/
+_site/
+_cache/
+*.epub
+
+# --- LaTeX compilations ---
+*.log
+*.aux
+*.out
+*.toc
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+# --- General ---
+.DS_Store
+Thumbs.db
+
+# --- Git ---
+*.orig

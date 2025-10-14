@@ -1,0 +1,19 @@
+# Core scientific stack
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+
+# Causal inference libraries
+notears
+pgmpy
+dowhy
+causal-learn
+
+# Graph and network libraries
+igraph
+networkx
+
+# Optional (depending on usage)
+jupyter

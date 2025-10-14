@@ -1,0 +1,4 @@
+dataset_name: ndhD
+discovery_alg: pc
+estimator_structure: chi-square
+estimator_parameters: BayesianEstimator - K2

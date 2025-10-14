@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.43">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Rubén Martos">
+<meta name="author" content="Christophe Ambroise">
+<meta name="author" content="Guillem Rigaill">
+<meta name="keywords" content="<em>Arabidopsis thaliana</em>, causal discovery, causal inference, chloroplast, DAG, do-calculus, EM-algorithm, genomics, graphical models, imputation, intervention, transcription">
+
+<title>Causal inference of post-transcriptional regulation timelines from long-read sequencing in Arabidopsis thaliana</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="chloroDAG_files/libs/clipboard/clipboard.min.js"></script>
+<script src="chloroDAG_files/libs/quarto-html/quarto.js"></script>
+<script src="chloroDAG_files/libs/quarto-html/popper.min.js"></script>
+<script src="chloroDAG_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="chloroDAG_files/libs/quarto-html/anchor.min.js"></script>
+<link href="chloroDAG_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="chloroDAG_files/libs/quarto-html/quarto-syntax-highlighting-d4d76bf8491c20bad77d141916dc28e1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="chloroDAG_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="chloroDAG_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="chloroDAG_files/libs/bootstrap/bootstrap-10daa034703793678e481cc8cee6d76f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="chloroDAG_files/libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="chloroDAG_files/libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="chloroDAG_files/libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul class="collapse">
+  <li><a href="#sec-intro" id="toc-sec-intro" class="nav-link active" data-scroll-target="#sec-intro"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#sec-related-work" id="toc-sec-related-work" class="nav-link" data-scroll-target="#sec-related-work"><span class="header-section-number">2</span> Related work</a>
+  <ul class="collapse">
+  <li><a href="#classical-methods-for-gene-regulatory-network-inference" id="toc-classical-methods-for-gene-regulatory-network-inference" class="nav-link" data-scroll-target="#classical-methods-for-gene-regulatory-network-inference"><span class="header-section-number">2.1</span> Classical Methods for Gene Regulatory Network Inference</a></li>
+  <li><a href="#temporal-data-and-dynamic-grn-inference" id="toc-temporal-data-and-dynamic-grn-inference" class="nav-link" data-scroll-target="#temporal-data-and-dynamic-grn-inference"><span class="header-section-number">2.2</span> Temporal Data and Dynamic GRN Inference</a></li>
+  <li><a href="#causality-and-grn-inference" id="toc-causality-and-grn-inference" class="nav-link" data-scroll-target="#causality-and-grn-inference"><span class="header-section-number">2.3</span> Causality and GRN Inference</a></li>
+  </ul></li>
+  <li><a href="#sec-frameworks" id="toc-sec-frameworks" class="nav-link" data-scroll-target="#sec-frameworks"><span class="header-section-number">3</span> A Causal Perspective on Maturation Timelines</a>
+  <ul class="collapse">
+  <li><a href="#sec-dataset" id="toc-sec-dataset" class="nav-link" data-scroll-target="#sec-dataset"><span class="header-section-number">3.1</span> Dataset: Transcriptional Maturation Timelines in <em>Arabidopsis thaliana</em></a></li>
+  <li><a href="#sec-paradigm-shift" id="toc-sec-paradigm-shift" class="nav-link" data-scroll-target="#sec-paradigm-shift"><span class="header-section-number">3.2</span> From Frequency-Based to Causal Chronologies</a></li>
+  </ul></li>
+  <li><a href="#sec-chloro" id="toc-sec-chloro" class="nav-link" data-scroll-target="#sec-chloro"><span class="header-section-number">4</span> Inferring Causal Maturation Timelines in Arabidopsis thaliana via Bayesian Gene‑Regulation Models</a>
+  <ul class="collapse">
+  <li><a href="#sec-imputation" id="toc-sec-imputation" class="nav-link" data-scroll-target="#sec-imputation"><span class="header-section-number">4.1</span> Imputation through Bayesian network discovery</a></li>
+  <li><a href="#sec-quantitative-causality" id="toc-sec-quantitative-causality" class="nav-link" data-scroll-target="#sec-quantitative-causality"><span class="header-section-number">4.2</span> Causal inference</a></li>
+  </ul></li>
+  <li><a href="#sec-discussion" id="toc-sec-discussion" class="nav-link" data-scroll-target="#sec-discussion"><span class="header-section-number">5</span> Conclusive discussion</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Causal inference of post-transcriptional regulation timelines from long-read sequencing in Arabidopsis thaliana</h1>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Authors</div>
+  <div class="quarto-title-meta-heading">Affiliations</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Rubén Martos <a href="mailto:ruben.martosprieto@univ-evry.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> <a href="https://orcid.org/https://orcid.org/0000-0002-1463-5088" class="quarto-title-author-orcid"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg=="></a></p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Université d’Évry Paris-Saclay
+          </p>
+      </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author">Christophe Ambroise <a href="mailto:christophe.ambroise@univ-evry.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> <a href="https://orcid.org/https://orcid.org/0000-0002-8148-0346" class="quarto-title-author-orcid"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg=="></a></p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Université d’Évry Paris-Saclay
+          </p>
+      </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author">Guillem Rigaill <a href="mailto:guillem.rigaill@inrae.fr" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> <a href="https://orcid.org/https://orcid.org/0000-0002-7176-7511" class="quarto-title-author-orcid"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg=="></a></p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Université Paris-Saclay, CNRS, INRAE, Université d’Évry
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>We propose a novel framework for reconstructing the chronology of genetic regulation using causal inference based on Pearl’s theory. The approach proceeds in three main stages: causal discovery, causal inference, and chronology construction. We apply it to the <em>ndhB</em> and <em>ndhD</em> genes of the chloroplast in <em>Arabidopsis thaliana</em>, generating four alternative maturation timeline models per gene, each derived from a different causal discovery algorithm (HC, PC, LiNGAM, or NOTEARS).Two methodological challenges are addressed: the presence of missing data, handled via an EM algorithm that jointly imputes missing values and estimates the Bayesian network, and the selection of the <span class="math inline">\(\ell_1\)</span>-regularization parameter in NOTEARS, for which we introduce a stability selection strategy. The resulting causal models consistently outperform reference chronologies in terms of both reliability and model fit. Moreover, by combining causal reasoning with domain expertise, the framework enables the formulation of testable hypotheses and the design of targeted experimental interventions grounded in theoretical predictions.</p>
+  </div>
+</div>
+
+<div>
+  <div class="keywords">
+    <div class="block-title">Keywords</div>
+    <p><em>Arabidopsis thaliana</em>, causal discovery, causal inference, chloroplast, DAG, do-calculus, EM-algorithm, genomics, graphical models, imputation, intervention, transcription</p>
+  </div>
+</div>
+
+</header>
+
+
+<div style="page-break-after: always;"></div>
+<section id="sec-intro" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>Transcriptomic regulation in chloroplasts involves a cascade of maturation events—transcript initiation, processing, splicing, trimming, and decay—that unfold over time. Long‑read sequencing data now make it possible to observe these events in full transcripts, offering a unique opportunity to study their dependencies and to reconstruct their chronological and possibly causal relationships <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>.</p>
+<p>Our main contribution in this paper is to provide a <strong>causal inference framework</strong> to order post‑transcriptional regulation events from long‑read sequencing data in <em>Arabidopsis thaliana</em>. In particular, we focus on the maturation of two chloroplast genes, <em>ndhB</em> and <em>ndhD</em>. These datasets provide rich ground for causal analysis: multiple post‑transcriptional events, block‑structured missing observations, and rare but biologically meaningful occurrences.</p>
+<p>The reference work of Guilcher <em>et al.</em> <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span> proposed a chronological ordering based on a deterministic principle: the more often a regulation event is observed alone, that is without others, the earlier it occured. We argue that this principle essentially assume that the sequence of regulation events is deterministic: a maturation event strictly depends on its predecessors: it is triggered by them and cannot occur otherwise. This does not align with the causal and probabilistic framework of Pearl, where rare events can still exert strong causal influence and probabilistically some events can still happen without their causal predecessors occurring. Consequently, our approach departs from frequency‑based ordering and instead builds on Bayesian networks and Pearl’s structural causal models.</p>
+<p>Our method proceeds in three stages: 1. <strong>Causal discovery</strong>: learning a directed acyclic graph (DAG) over maturation events using HC, PC, LiNGAM, and NOTEARS, with a stability selection strategy for the <span class="math inline">\(\ell_1\)</span>‑regularization parameter in NOTEARS. 2. <strong>Causal inference</strong>: estimating causal effects via do‑calculus and counterfactual reasoning. Missing data are handled via an EM algorithm that jointly imputes missing values and estimates the Bayesian network. 3. <strong>Chronology construction</strong>: translating estimated causal effects into maturation timeline models, yielding hypotheses about how perturbations (e.g., blocking a processing step) shift downstream events.</p>
+<p>We show that this causal‑chronology approach produces timelines that often differ substantially from the reference order in <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>, and that it provides better fit, stability, and interpretability. Beyond improving chronology reconstruction, our framework allows “what if” questions and guides the design of targeted perturbation experiments in <em>Arabidopsis thaliana</em>.</p>
+</section>
+<section id="sec-related-work" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Related work</h1>
+<section id="classical-methods-for-gene-regulatory-network-inference" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="classical-methods-for-gene-regulatory-network-inference"><span class="header-section-number">2.1</span> Classical Methods for Gene Regulatory Network Inference</h2>
+<p>Early computational approaches to gene regulatory network (GRN) inference relied heavily on classical statistical and machine learning techniques designed to extract dependencies from large-scale gene expression data. A widely used family of methods is based on <em>information theory</em>, particularly mutual information (MI), which quantifies statistical dependencies between gene expression profiles. Algorithms such as <strong>ARACNE</strong> (Algorithm for the Reconstruction of Accurate Cellular Networks) apply MI combined with the data processing inequality to prune indirect associations, thereby yielding clearer networks <span class="citation" data-cites="Margolin2006"><a href="#ref-Margolin2006" role="doc-biblioref">[2]</a></span>. Extensions like <strong>CLR</strong> (Context Likelihood of Relatedness) <span class="citation" data-cites="Faith2007"><a href="#ref-Faith2007" role="doc-biblioref">[3]</a></span> and <strong>MRNET</strong> <span class="citation" data-cites="Meyer2008_minet"><a href="#ref-Meyer2008_minet" role="doc-biblioref">[4]</a></span> further refine this principle by contextualizing MI scores or reducing redundancy among inferred interactions.</p>
+<p>Another influential line of work exploits <em>tree-based ensemble methods</em>, most notably <strong>GENIE3</strong>, which decomposes the problem into regression tasks where each gene’s expression is predicted from all others using Random Forests or Extra-Trees <span class="citation" data-cites="HuynhThu2010"><a href="#ref-HuynhThu2010" role="doc-biblioref">[5]</a></span>. GENIE3 and its variants consistently rank highly in community benchmarks such as DREAM challenges, and they established machine learning as a reference framework for GRN inference. Complementary classical models include <strong>Bayesian networks</strong> <span class="citation" data-cites="Friedman2000"><a href="#ref-Friedman2000" role="doc-biblioref">[6]</a></span>, which encode conditional dependencies in a probabilistic graphical framework, and <strong>structural equation models</strong> (SEMs) <span class="citation" data-cites="Pearl2009"><a href="#ref-Pearl2009" role="doc-biblioref">[7]</a></span>, which leverage linear relations between variables while enforcing acyclicity constraints. These methods laid the groundwork for later developments in causal discovery and deep learning.</p>
+</section>
+<section id="temporal-data-and-dynamic-grn-inference" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="temporal-data-and-dynamic-grn-inference"><span class="header-section-number">2.2</span> Temporal Data and Dynamic GRN Inference</h2>
+<p>While static methods infer regulatory interactions from steady-state or aggregated expression measurements, many biological processes unfold dynamically. To capture this temporal dimension, classical extensions of GRN inference integrate <em>time-series data</em>. For example, <strong>dynGENIE3</strong> extends the Random Forest-based GENIE3 by embedding regulatory effects in <em>ordinary differential equations</em> (ODEs), enabling simultaneous modeling of steady-state and temporal expression patterns <span class="citation" data-cites="HuynhThuGeurts2018"><a href="#ref-HuynhThuGeurts2018" role="doc-biblioref">[8]</a></span>. Other approaches utilize <em>dynamic Bayesian networks</em> (DBNs) <span class="citation" data-cites="Murphy2002DBN"><a href="#ref-Murphy2002DBN" role="doc-biblioref">[9]</a></span>, which explicitly model temporal dependencies and can infer time-lagged interactions. Techniques such as <strong>SINCERITIES</strong> <span class="citation" data-cites="PapiliGao2018SINCERITIES"><a href="#ref-PapiliGao2018SINCERITIES" role="doc-biblioref">[10]</a></span> infers directed and signed gene‐regulatory edges by regressing each gene’s expression on candidate regulators across time‐stamped single‐cell data, incorporating statistical distances (e.g.&nbsp;Kolmogorov–Smirnov) between distributions at successive time points to capture dynamics. More recently <strong>GRNBoost2</strong> <span class="citation" data-cites="Moerman2019GRNBoost2"><a href="#ref-Moerman2019GRNBoost2" role="doc-biblioref">[11]</a></span> applies efficient gradient boosting regressors, where regulator–target interactions are ranked via feature importance in boosted decision trees.</p>
+<p>These temporal frameworks are particularly relevant to the analysis of <em>full-length transcriptome datasets</em>, such as those generated by nanopore sequencing of plastid RNAs in <em>Arabidopsis thaliana</em> <span class="citation" data-cites="Guilcher2025"><a href="#ref-Guilcher2025" role="doc-biblioref">[12]</a></span>. In this setting, the order and co-occurrence of post-transcriptional maturation events are not merely static associations but dynamic processes unfolding over time. This makes temporal GRN inference a crucial methodological bridge between raw sequencing data and interpretable models of chloroplast gene regulation.</p>
+</section>
+<section id="causality-and-grn-inference" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="causality-and-grn-inference"><span class="header-section-number">2.3</span> Causality and GRN Inference</h2>
+<p>A central limitation of both static and temporal GRN inference methods is that they often rely on correlations or statistical dependencies, which do not necessarily imply causation. To support biological interpretation and experimental design, it is essential not only to infer structure, but also to reason about what would happen under perturbations. Causal discovery provides a principled framework that integrates graphical models, do-calculus, and structural equation modeling, thereby enabling the formal characterization of interventions and counterfactual reasoning (i.e.&nbsp;what would expression look like if we force a regulator on or off) <span class="citation" data-cites="CausalityBook_Pearl"><a href="#ref-CausalityBook_Pearl" role="doc-biblioref">[13]</a></span>. For example, LiNGAM exploits non-Gaussianity to orient edges; PC and HC use conditional independence tests to recover causal structure; and NOTEARS <span class="citation" data-cites="DagsNotears"><a href="#ref-DagsNotears" role="doc-biblioref">[14]</a></span> frames DAG learning as continuous optimization while preserving acyclicity, making it more amenable to counterfactual queries. These causal approaches provide a principled route beyond correlation-based GRNs—allowing not only inference of regulatory architecture, but simulation of interventions and estimation of causal effect—for instance, predicting how blocking or activating a transcript processing event may shift downstream maturation timelines, a perspective directly relevant in the full-length transcriptome context of <em>Arabidopsis thaliana</em>.</p>
+</section>
+</section>
+<section id="sec-frameworks" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> A Causal Perspective on Maturation Timelines</h1>
+<section id="sec-dataset" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="sec-dataset"><span class="header-section-number">3.1</span> Dataset: Transcriptional Maturation Timelines in <em>Arabidopsis thaliana</em></h2>
+<p>Our case study focuses on full-length transcriptome datasets describing the post-transcriptional maturation of two chloroplast genes in <em>Arabidopsis thaliana</em>, <strong><em>ndhB</em></strong> and <strong><em>ndhD</em></strong> <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>. Each dataset records for each sequencing read the presence or absence of specific maturation events, such as RNA editing or splicing, encoded as binary random variables (<span class="math inline">\(1 =\)</span> observed, <span class="math inline">\(0 =\)</span> not observed). Errors introduced by nanopore sequencing are treated as unobserved events and assigned the value <span class="math inline">\(0\)</span> during pre-processing. The <em>ndhB</em> dataset comprises 1 899 observations (or reads), of which only 117 are fully observed, and includes 12 distinct maturation events. Missing values are present in most reads and typically appear as contiguous blocks rather than isolated sites. In comparison, the <em>ndhD</em> dataset contains 7 752 observations with 930 fully observed, and involves 5 maturation events. Its missing values follow a similar block structure to those of <em>ndhB</em>. A glimpse of the untreated datasets is provided in <a href="#tbl-glimpse_data" class="quarto-xref">Table&nbsp;1</a>.</p>
+<p>The distribution of missing values makes it impractical to restrict the joint analyses of all events to fully observed reads, as this would drastically reduce the sample size (to 117 for <em>ndhB</em> and 930 for <em>ndhD</em>).<br>
+Instead, imputation strategies are required to exploit the full dataset. Furthermore, the block-structured nature of missingness suggests systematic sequencing coverage gaps rather than random dropout, which must be considered when designing statistical models.</p>
+<p>These datasets provide a rich ground for causal discovery: the binary encoding of maturation events is well suited for Bayesian network learning, while the relatively high number of observations allows for robust estimation despite missing data.</p>
+<div id="tbl-glimpse_data" class="quarto-layout-panel anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-glimpse_data-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Untreated working datasets
+</figcaption>
+<div aria-describedby="tbl-glimpse_data-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="cell quarto-layout-cell-subref quarto-layout-cell" data-message="false" data-execution_count="1" data-ref-parent="tbl-glimpse_data" style="flex-basis: 100.0%;justify-content: center;">
+<div id="tbl-glimpse_ndhb" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="1" data-message="false">
+<figure class="quarto-float quarto-subfloat-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-subfloat-caption quarto-subfloat-tbl" id="tbl-glimpse_ndhb-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) <em>ndhB</em>. The editing events are defined in terms of their genomic sites: ed1 = 94622, ed2 = 94999, ed3 = 95225, ed4 = 95608, ed5 = 95644, ed6 = 95650, ed7 = 96419, ed8 = 96439, ed9 = 96457, ed10 = 96579, ed11 = 96698, ed12 = 97016.
+</figcaption>
+<div aria-describedby="tbl-glimpse_ndhb-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="127">
+<div>
+
+
+<table class="dataframe do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th"></th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed1</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed2</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed3</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed4</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed5</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed6</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed7</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed8</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed9</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed10</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed11</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed12</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">intron</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;" data-quarto-table-cell-role="th">646</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">False</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;" data-quarto-table-cell-role="th">446</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">Err</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;" data-quarto-table-cell-role="th">81</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;" data-quarto-table-cell-role="th">1164</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">True</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;" data-quarto-table-cell-role="th">1090</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">False</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell quarto-layout-cell-subref quarto-layout-cell" data-message="false" data-execution_count="2" data-ref-parent="tbl-glimpse_data" style="flex-basis: 100.0%;justify-content: center;">
+<div id="tbl-glimpse_ndhd" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="2" data-message="false">
+<figure class="quarto-float quarto-subfloat-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-subfloat-caption quarto-subfloat-tbl" id="tbl-glimpse_ndhd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) <em>ndhD</em>. The editing events are defined in terms of their genomic sites: ed1 = 116281, ed2 = 116290, ed3 = 116494, ed4 = 116785, ed5 = 117166.
+</figcaption>
+<div aria-describedby="tbl-glimpse_ndhd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="128">
+<div>
+
+
+<table class="dataframe do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th"></th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed1</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed2</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed3</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed4</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">ed5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;" data-quarto-table-cell-role="th">3814</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">False</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;" data-quarto-table-cell-role="th">3045</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">False</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;" data-quarto-table-cell-role="th">124</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;" data-quarto-table-cell-role="th">6666</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">False</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;" data-quarto-table-cell-role="th">3050</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">NaN</td>
+<td style="text-align: left;">False</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</figure>
+</div>
+</section>
+<section id="sec-paradigm-shift" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="sec-paradigm-shift"><span class="header-section-number">3.2</span> From Frequency-Based to Causal Chronologies</h2>
+<p>The primary objective of this study is to infer a chronology of post-transcriptional maturation events for the <em>ndhB</em> and <em>ndhD</em> genes in <em>Arabidopsis thaliana</em>. A chronology here refers to a directed acyclic graph (DAG) where nodes represent maturation events and directed edges indicate temporal precedence (i.e.&nbsp;if there is an arrow from event <span class="math inline">\(A\)</span> to event <span class="math inline">\(B\)</span>, then <span class="math inline">\(A\)</span> occurs before <span class="math inline">\(B\)</span> in the maturation timeline).</p>
+<p>The postulate that guides the argument in <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span> for proposing a chronology of maturation events is the following: <em>the more often an event occurs (or is observed) without others, the sooner it is the maturation timeline</em>.</p>
+<p>Let us briefly summarize the pipeline elaborated in <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span> to infer such a chronology starting from this assumption. According to the working dataset, the maturation events are viewed as random variables that can take binary values: <span class="math inline">\(1\)</span> if the event has been observed during the post-transcriptional maturation process, <span class="math inline">\(0\)</span> otherwise.</p>
+<p><strong>Dependence discovery</strong>. The first step consists in carrying out statistical pairwise dependence tests<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> in order to find out the actual dependencies between all possible couples of maturation events. In this step, we obtain an edge <span class="math inline">\(A - B\)</span> between two maturation events <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> if they are declared statisticaly dependent (adjusted p-value less than a pre-specified treshold). Note that by the end of this procedure an undirected graph is obtained.</p>
+<p><strong>Temporal order decision</strong>. Next, in order to decide whether regulation <span class="math inline">\(A\)</span> occured before or after regulation <span class="math inline">\(B\)</span> in the maturation timeline, one has to decide the direction of the edge by defining an arrow. For this, one applies the postulate:</p>
+<p><span class="math display">\[\begin{align*}
+\text{If } \#\{(A=1, B=0)\} &amp;&gt; \#\{(A=0, B=1)\}\text{, then } A\rightarrow B.\\
+\text{If } \#\{(A=1, B=0)\} &amp;&lt; \#\{(A=0, B=1)\}\text{, then } A\leftarrow B.
+\end{align*}\]</span></p>
+<p>Note that by the end of this procedure a directed graph without cycles (i.e.&nbsp;a <em>DAG</em>) is produced.</p>
+<p><strong>Chronology representation</strong>. Finally, we must account for two particular situations. First, the analysis does not always yield a complete chronological order: ambiguities may arise when determining the temporal relationship between two events. In such cases, we consider these events to occur simultaneously. Second, some maturation events occur independently of all others. These are either excluded from the chronology or represented in the DAG as isolated nodes.</p>
+<p>By way of example, <a href="#fig-ndhD-analysis" class="quarto-xref">Figure&nbsp;1</a> shows the complete analysis workflow for <em>ndhD</em> obtained in <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>. <a href="#fig-ndhD-analysis-a" class="quarto-xref">Figure&nbsp;1 (a)</a> displays the dependencies network between different maturation events, while <a href="#fig-ndhD-analysis-b" class="quarto-xref">Figure&nbsp;1 (b)</a> presents the final maturation timeline in its DAG form.</p>
+<div id="fig-ndhD-analysis" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ndhD-analysis-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-ndhD-analysis" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div id="fig-ndhD-analysis-a" class="lightbox quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-ndhD-analysis-a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="Figures%20Reference%20Graphs/depend_ndhD_Fig5.png" class="lightbox" data-gallery="fig-ndhD-analysis" title="Figure&nbsp;1&nbsp;(a): Dependencies network"><img src="Figures%20Reference%20Graphs/depend_ndhD_Fig5.png" class="img-fluid figure-img" data-ref-parent="fig-ndhD-analysis" width="300"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-ndhD-analysis-a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Dependencies network
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-ndhD-analysis" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div id="fig-ndhD-analysis-b" class="lightbox quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-ndhD-analysis-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="Figures%20Reference%20Graphs/chron_ndhD_Fig6.png" class="lightbox" data-gallery="fig-ndhD-analysis" title="Figure&nbsp;1&nbsp;(b): Reference maturation chronology"><img src="Figures%20Reference%20Graphs/chron_ndhD_Fig6.png" class="img-fluid figure-img" data-ref-parent="fig-ndhD-analysis" width="300"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-ndhD-analysis-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Reference maturation chronology
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ndhD-analysis-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Analysis of genetic regulation for <em>ndhD</em> from <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>: (a) statistical dependencies between maturation events, and (b) resulting directed acyclic graph representing the maturation timeline based on frequency ordering.
+</figcaption>
+</figure>
+</div>
+<p>The previous conception is based on a determinist viewpoint, commonly shared in the biological community: <em>a maturation event strictly depends on its predecessors: it is triggered by them and cannot occur otherwise</em>. However, we know by now that the interactions between different maturation events can be much more complex and intricate than that (cf. <span class="citation" data-cites="Heterologous_SchmitzEtAl"><a href="#ref-Heterologous_SchmitzEtAl" role="doc-biblioref">[15]</a></span>, <span class="citation" data-cites="LarchMito_MarechalEtAl"><a href="#ref-LarchMito_MarechalEtAl" role="doc-biblioref">[16]</a></span>. <span class="citation" data-cites="ChloroCP31A_TillichEtAl"><a href="#ref-ChloroCP31A_TillichEtAl" role="doc-biblioref">[17]</a></span>, <span class="citation" data-cites="SiteSelective_KarcherBock"><a href="#ref-SiteSelective_KarcherBock" role="doc-biblioref">[18]</a></span>, <span class="citation" data-cites="CisElements_TakenakaNeuwirtBrennicke"><a href="#ref-CisElements_TakenakaNeuwirtBrennicke" role="doc-biblioref">[19]</a></span>).</p>
+<p>In this sense, our approach represents a paradigm shift based on the following two objections to the deterministic postulate: <em>an event can have a strong causal effect even if it is rare</em> and <em>probabilistically some events can still happen without their causal predecessors occurring</em>. Accordingly, a maturation event can appear on the top of the maturation timeline even if it is hardly observed alone (that is without other regulations).</p>
+<p>A biological explanation for this phenomenon relates to the speed at which events occur. Assume for example, that event <span class="math inline">\(A\)</span> strongly or rapidly promotes event <span class="math inline">\(B\)</span>, then <span class="math inline">\(B\)</span> will quickly follow <span class="math inline">\(A\)</span>, so <span class="math inline">\(A\)</span> will rarely be observed alone. If we further assume that <span class="math inline">\(B\)</span> can occur (for some small probability) without <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> does not promote <span class="math inline">\(A\)</span>, then <span class="math inline">\(B\)</span> will often be observed without <span class="math inline">\(A\)</span>. In this scenario <span class="math inline">\(A\)</span> is the cause of <span class="math inline">\(B\)</span>, yet using the deterministic viewpoint we would conclude otherwise.</p>
+<p>Such circumstances can indeed be observed within the working dataset. Namely, generating the frequency table of all five possible outcomes for <em>ndhD</em>, one can find instances of this phenomenon. Specifically, <a href="#tbl-contigency_ed40_ed41" class="quarto-xref">Table&nbsp;2</a> shows the contingency matrix for the pair of maturation events located at the genomic sites 116494 and 116785. Let <span class="math inline">\(A:= \text{ndhD\_116494}\)</span> and <span class="math inline">\(B:= \text{ndhD\_116785}\)</span>. We observe that ndhD_116494 appears much less frequently alone than ndhD_116785. According to the deterministic postulate, this would suggest an arrow <span class="math inline">\(\text{ndhD\_116785}\longrightarrow \text{ndhD\_116494}\)</span>, as shown in <a href="#fig-ndhD-analysis-b" class="quarto-xref">Figure&nbsp;1 (b)</a>. However, the causal Hill-Climbing model (HC-model, <span class="citation" data-cites="TeyssierKoller2005"><a href="#ref-TeyssierKoller2005" role="doc-biblioref">[20]</a></span>), for example, proposes the reverse direction, <span class="math inline">\(\text{ndhD\_116494}\longrightarrow \text{ndhD\_116785}\)</span>, as seen in <a href="#fig-causal_HCmodel_chron_ndhD" class="quarto-xref">Figure&nbsp;2</a><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
+<div class="cell" data-message="false" data-execution_count="3">
+<div id="tbl-contigency_ed40_ed41" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="3" data-message="false">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-contigency_ed40_ed41-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Contingency matrix for the pair (ndhD_116494, ndhD_116785)
+</figcaption>
+<div aria-describedby="tbl-contigency_ed40_ed41-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="129">
+<div>
+
+
+<table class="dataframe do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">ndhD_116785 = 0</th>
+<th data-quarto-table-cell-role="th">ndhD_116785 = 1</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">ndhD_116494 = 0</td>
+<td>82</td>
+<td>144</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">ndhD_116494 = 1</td>
+<td>39</td>
+<td>304</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>As we will see in <a href="#sec-chloro" class="quarto-xref">Section&nbsp;4</a>, some of the proposed models even yield a reversed chronology compared to the one proposed in <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>. The causal HC-model again serves as an example: the path <span class="math inline">\(\text{ndhD\_116290}\longrightarrow\text{ndhD\_116494}\longrightarrow \text{ndhD\_116785}\)</span> from <a href="#fig-causal_HCmodel_chron_ndhD" class="quarto-xref">Figure&nbsp;2</a> reflects a reversed timeline relative to that proposed by the reference model in <a href="#fig-ndhD-analysis-b" class="quarto-xref">Figure&nbsp;1 (b)</a>.</p>
+<p>Moreover, the frequency table allows the following counts:</p>
+<ul>
+<li>ndhD_116290 appears <span class="math inline">\(8\)</span> times alone.</li>
+<li>ndhD_116290 appears <span class="math inline">\(26\)</span> times together with ndhD_116494.</li>
+<li>ndhD_116290 appears <span class="math inline">\(262\)</span> times together with both ndhD_116494 and ndhD_116785.</li>
+</ul>
+<p>In other words, the event ndhD_116290 strongly promotes ndhD_116494, so it is rarely observed alone (and ndhD_116494 is often observed without ndhD_116290). Besides, we see an increasing number of co-occurrences with the subsequent events of the proposed timeline.</p>
+<div id="fig-causal_HCmodel_chron_ndhD" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" data-fig-pos="H">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-causal_HCmodel_chron_ndhD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="Figures%20Causal%20Chronology/chron_DAG_HC_ndhD.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;2: Causal HC-model for maturation chronology for ndhD"><img src="Figures%20Causal%20Chronology/chron_DAG_HC_ndhD.png" class="img-fluid figure-img" data-fig-pos="H" width="300"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-causal_HCmodel_chron_ndhD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Causal HC-model for maturation chronology for <em>ndhD</em>
+</figcaption>
+</figure>
+</div>
+<p>More formally, the deterministic postulate relies on a connection between the phenomenon <span class="math inline">\(\Big(\text{$A$ is the cause of $B$}\Big)\)</span> and the phenomenon <span class="math inline">\(\Big(\text{$A$ is observed alone more often than $B$ alone}\Big)\)</span>. However, from a probabilistic point of view, it is clear that the second phenomenon does not allow to conclude any causal effect of <span class="math inline">\(A\)</span> on <span class="math inline">\(B\)</span>. Therefore, our paradigm shift consists in adopting a probabilistic approach to the problem by directly computing <span class="math inline">\(P(A\Rightarrow B)\)</span>. The mathematical framework for this is the causal inference theory in terms of <em>do-calculus</em> developped by J. Pearl (cf. <span class="citation" data-cites="CausalityPaper_Pearl CausalityBook_Pearl"><a href="#ref-CausalityBook_Pearl" role="doc-biblioref">[13]</a>, <a href="#ref-CausalityPaper_Pearl" role="doc-biblioref">[21]</a></span>).</p>
+<div id="def-CausalEffect" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 1</strong></span> We say that <span class="math inline">\(A\)</span> has a causal effect on <span class="math inline">\(B\)</span> if <span class="math display">\[P(B=1\ |\ \text{do($A=1$)}) &gt; P(B=1\ |\ \text{do($A=0$)}).\]</span></p>
+<p>We put <span class="math inline">\(P(A\Rightarrow B):= P(B=1\ |\ \text{do($A=1$)})\)</span> and <span class="math inline">\(P(\overline{A}\Rightarrow B):= P(B=1\ |\ \text{do($A=0$)})\)</span>.</p>
+</div>
+<div id="rem-chron_causality" class="proof remark">
+<p><span class="proof-title"><em>Remark 1</em>. </span>It is apparent that there is a close relationship between <em>chronology</em> and <em>causality</em>. Indeed, if <span class="math inline">\(B\)</span> occurs before <span class="math inline">\(A\)</span>, then <span class="math inline">\(A\)</span> is definitely not a cause of <span class="math inline">\(B\)</span>. In other words, causality entails a temporal order, hence a chronology.</p>
+</div>
+<p>To conclude this section, we summarize the proposed pipeline within our probabilistic framework, which is implemented and illustrated in <a href="#sec-chloro" class="quarto-xref">Section&nbsp;4</a>.</p>
+<ol type="1">
+<li><strong>Causal discovery</strong>. The first step is to infer a Directed Acyclic Graph (DAG) directly from the working dataset. We apply several well‑known methods: Hill Climbing (HC, <span class="citation" data-cites="TeyssierKoller2005"><a href="#ref-TeyssierKoller2005" role="doc-biblioref">[20]</a></span>), Peter‑Clark (PC, <span class="citation" data-cites="spirtes1993causation"><a href="#ref-spirtes1993causation" role="doc-biblioref">[22]</a></span>), LiNGAM <span class="citation" data-cites="shimizu2006linear"><a href="#ref-shimizu2006linear" role="doc-biblioref">[23]</a></span>; and more recent continuous optimization variants such as NOTEARS <span class="citation" data-cites="DagsNotears"><a href="#ref-DagsNotears" role="doc-biblioref">[14]</a></span>. This step involves both unconditional (statistical) dependence tests and conditional dependence tests, in order to establish directed edges between pairs of events in accordance with the observed data <a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</li>
+</ol>
+<ol start="2" type="1">
+<li><p><strong>Causal inference</strong>. The first step yields a directed edge between two events, say <span class="math inline">\(A\rightarrow B\)</span>. This suggests that <span class="math inline">\(A\)</span> is a potential cause of <span class="math inline">\(B\)</span>, though it may nevertheless happen that <span class="math inline">\(B\)</span> occurs without <span class="math inline">\(A\)</span>. To decide whether <span class="math inline">\(A\)</span> is an actual cause of <span class="math inline">\(B\)</span>, we perform a causal inference analysis: isolating the causal effect; identifying and adjusting for confounders; and, when possible, designing interventions or applying graphical criteria such as the <em>backdoor criterion</em> to ensure that any spurious associations are removed.</p></li>
+<li><p><strong>Chronology representation</strong>. Finally, we construct the <em>maximal causality path</em> based on the previous analysis. More precisely, among all causal effects, we retain only those with the highest impact, respecting the topological order of the initial DAG obtained in the first step. By the end of this procedure one obtains a tree (as a sub-DAG of the discovered DAG in the first step) representing the chronology between the maturation events<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>.</p></li>
+</ol>
+</section>
+</section>
+<section id="sec-chloro" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Inferring Causal Maturation Timelines in Arabidopsis thaliana via Bayesian Gene‑Regulation Models</h1>
+<p>In this section, we apply the full causal inference pipeline described earlier to the post-transcriptional maturation of two chloroplast genes in <em>Arabidopsis thaliana</em>: <strong><em>ndhB</em></strong> and <strong><em>ndhD</em></strong>. These genes provide an ideal testing ground for our methodology: they involve multiple sequential maturation events—such as splicing and editing—captured in binary form from full-length transcriptomic nanopore reads, and exhibit block-structured missing data. Our goal is to infer robust and interpretable causal chronologies of these events, going beyond mere co-occurrence or frequency-based assumptions. Starting from imputed datasets, we learn causal structures using HC, PC, LiNGAM, and NOTEARS, estimate causal effects using do-calculus, and construct timeline DAGs that reflect high-impact, directed causal relationships between maturation events. The NOTEARS algorithm was adapted via a two-level stability selection strategy to enhance robustness in the discovery of causal structures; see Appendix <a href="#sec-notears" class="quarto-xref">Section&nbsp;6.1</a> for details.</p>
+<section id="sec-imputation" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="sec-imputation"><span class="header-section-number">4.1</span> Imputation through Bayesian network discovery</h2>
+<p>An important limitation of the datasets used to study gene regulation in <em>Arabidopsis thaliana</em> is the significant presence of missing values. The distribution of these missing entries makes it impractical to restrict the dataset to fully observed rows, as this would drastically reduce the number of usable observations. This issue also affects the first step of our pipeline–<strong><em>Causal discovery</em></strong>–. As a result, we must perform imputation jointly with the learning of the corresponding Bayesian network.</p>
+<p>To handle the full dataset, our strategy for missing data involves two stages of imputation: 1. <strong><em>Initial imputation</em></strong>, and 2. <strong><em>Graphical model imputation</em></strong>. Implementation details and configuration settings are available in a <a href="https://github.com/cambroise/chloroDAG">GitHub repository</a>.</p>
+<ol type="1">
+<li><p><strong>Initial imputation</strong>. First, we perform a preliminary imputaton of missing values in order to have a complete dataset as a starting point for learning the Bayesian Network (via the selected causal discovery algorithm). Technically, the initial imputation is carried out using the <code>IterativeImputer</code> class from the <code>scikit-learn</code> Python library (cf. <span class="citation" data-cites="scikit-learnLibrary"><a href="#ref-scikit-learnLibrary" role="doc-biblioref">[24]</a></span>). This method models each feature with missing values as a function of other features, using those estimates for imputation in a round-robin fashion. At each step, one feature (i.e.&nbsp;column) is treated as the target and the others as predictors.</p></li>
+<li><p><strong>Graphical model imputation</strong>. Next, we apply an <em>Expectation-Maximization</em> (EM) algorithm to jointly refine the imputed values and the Bayesian Network. The EM algorithm alternates between two steps:</p>
+<ul>
+<li><strong>E-step (Expectation):</strong> Missing values are imputed using the current Bayesian Network. For each missing value:
+<ul>
+<li>The parents of the variable in the current DAG are identified.</li>
+<li>The corresponding Conditional Probability Distribution (CPD) is used to compute the most likely value for the missing entry, given its parents’ values.</li>
+<li>The dataset is updated by replacing the missing value with this most probable estimate.</li>
+</ul></li>
+<li><strong>M-step (Maximization):</strong> A new Bayesian Network is learned from the updated dataset using the selected causal discovery algorithm (HC, PC, LiNGAM, or NOTEARS). This includes:
+<ul>
+<li>Re-learning the DAG structure from the completed data.</li>
+<li>Re-estimating the CPDs.</li>
+</ul></li>
+</ul></li>
+</ol>
+<p>These steps are repeated iteratively until convergence, defined as the point where the proportion of changed directed edges between iterations falls below 1%.</p>
+<div id="rem-init_imp" class="proof remark">
+<p><span class="proof-title"><em>Remark 2</em>. </span>Numerical experiments with our gene regulation datasets have shown that the choice of initial imputation method does not significantly affect the resulting graphical model. For example, a simple <em>mode</em> imputation yields the same final network.</p>
+</div>
+<div id="rem-Belief_Prop" class="proof remark">
+<p><span class="proof-title"><em>Remark 3</em>. </span>The <strong><em>Graphical model imputation</em></strong> method described above converges rapidly. In fact, in our experiments, the network stabilizes by the second iteration. One possible explanation for this efficiency lies in the way missing values are updated: when a variable with missing data is identified, the marginal probabilities required for its update are computed using the values obtained from the initial imputation. That is, even if some parent variables also had missing values originally, they are treated as observed, based on the initial imputation.</p>
+<p>A more principled approach would involve applying a <em>Belief Propagation</em> algorithm (cf. <span class="citation" data-cites="IntelligentSystemsBook_Pearl"><a href="#ref-IntelligentSystemsBook_Pearl" role="doc-biblioref">[25]</a></span>, <span class="citation" data-cites="LoopyBP"><a href="#ref-LoopyBP" role="doc-biblioref">[26]</a></span>) in step (iv.c) to account for the uncertainty in the imputed parent values. However, our experiments indicate that this variant is significantly slower and does not lead to any substantial refinement of the resulting Bayesian network. In practice, the final graph is effectively the same as the one obtained directly from the initial imputation, without applying any further iterative refinement steps. One potential reason for this behavior is that the <em>Belief Propagation</em>-based version of the imputation process imposes, by construction, rigid structural constraints on the DAG, which in turn limits the ability of the EM algorithm to refine the network structure.</p>
+</div>
+<p>In our case study, we focus on datasets that describe the genetic regulation of the <em>ndhB</em> and <em>ndhD</em> genes located in the chloroplast of <em>Arabidopsis thaliana</em>. We provide a brief description of the datasets used and the distribution of missing (<code>nan</code>) values.</p>
+<p>Maturation events are modeled as binary random variables: <span class="math inline">\(1\)</span> if observed during post-transcriptional maturation, <span class="math inline">\(0\)</span> otherwise. Errors introduced by the nanopore sequencing technology used in <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span> are treated as unobserved events and assigned a value of <span class="math inline">\(0\)</span> during initial pre-processing—an approach consistent with the binary encoding.</p>
+<section id="ndhb-dataset" class="level3 unnumbered unlisted">
+<h3 class="unnumbered unlisted anchored" data-anchor-id="ndhb-dataset"><em>ndhB</em> dataset</h3>
+<ul>
+<li><strong>No.&nbsp;observations</strong>: <span class="math inline">\(1899\)</span> including <span class="math inline">\(117\)</span> fully observed.</li>
+<li><strong>No.&nbsp;maturation events</strong>: <span class="math inline">\(12\)</span> whose sites are <span class="math inline">\(94622\)</span>, <span class="math inline">\(94999\)</span>, <span class="math inline">\(95225\)</span>, <span class="math inline">\(95608\)</span>, <span class="math inline">\(95644\)</span>, <span class="math inline">\(95650\)</span>, <span class="math inline">\(96419\)</span>, <span class="math inline">\(96439\)</span>, <span class="math inline">\(96457\)</span>, <span class="math inline">\(96579\)</span>, <span class="math inline">\(96698\)</span>, <span class="math inline">\(97016\)</span>.</li>
+<li><strong>Distribution of <code>nan</code> values</strong>. Each observation contains a <em>unique</em> block with consecutive reads, i.e.&nbsp;there is no isolated reads in the genomic region between <code>nan</code> values. <a href="#fig-ndhB_nan_distr" class="quarto-xref">Figure&nbsp;3</a> shows a visualisation of the distribution of the values of the <em>ndhB</em> dataset before the imputation process described previously.</li>
+</ul>
+<div id="fig-ndhB_nan_distr" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-pos="H">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ndhB_nan_distr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures%20NaN%20distributions/ndhB_visu_sorted.png" class="img-fluid figure-img" style="width:40.0%" data-fig-pos="H">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ndhB_nan_distr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Distribution of values for <em>ndhB</em> before imputation: <span class="math inline">\(\color{MyDarkBlue}{\blacksquare}\)</span> <span class="math inline">\(=\)</span> value <span class="math inline">\(0\)</span>, <span class="math inline">\(\color{MyBlue}{\blacksquare}\)</span> <span class="math inline">\(=\)</span> value <span class="math inline">\(1\)</span>, <span class="math inline">\(\color{MySmokyBlue}{\blacksquare}\)</span> <span class="math inline">\(=\)</span> value <code>nan</code>
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="ndhd-dataset" class="level3 unnumbered no-toc">
+<h3 class="unnumbered no-toc anchored" data-anchor-id="ndhd-dataset"><em>ndhD</em> dataset</h3>
+<ul>
+<li><strong>No.&nbsp;observations</strong>: <span class="math inline">\(7752\)</span> including <span class="math inline">\(930\)</span> fully observed.</li>
+<li><strong>No.&nbsp;maturation events</strong>: <span class="math inline">\(5\)</span> whose sites are <span class="math inline">\(116281\)</span>, <span class="math inline">\(116290\)</span>, <span class="math inline">\(116494\)</span>, <span class="math inline">\(116785\)</span>, <span class="math inline">\(117166\)</span>.</li>
+<li><strong>Distribution of <code>nan</code> values</strong>. Each observation contains a <em>unique</em> block with consecutive reads, i.e.&nbsp;there is no isolated reads in the genomic region between <code>nan</code> values. <a href="#fig-ndhD_nan_distr" class="quarto-xref">Figure&nbsp;4</a> shows a visualisation of the distribution of the values of the <em>ndhD</em> dataset before the imputation process described previously.</li>
+</ul>
+<div id="fig-ndhD_nan_distr" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-pos="H">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ndhD_nan_distr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures%20NaN%20distributions/ndhD_visu_sorted.png" class="img-fluid figure-img" style="width:18.0%" data-fig-pos="H">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ndhD_nan_distr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Distribution of values for <em>ndhD</em> before imputation: <span class="math inline">\(\color{MyDarkBlue}{\blacksquare}\)</span> <span class="math inline">\(=\)</span> value <span class="math inline">\(0\)</span>, <span class="math inline">\(\color{MyBlue}{\blacksquare}\)</span> <span class="math inline">\(=\)</span> value <span class="math inline">\(1\)</span>, <span class="math inline">\(\color{MySmokyBlue}{\blacksquare}\)</span> <span class="math inline">\(=\)</span> value <code>nan</code>
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-quantitative-causality" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="sec-quantitative-causality"><span class="header-section-number">4.2</span> Causal inference</h2>
+<p>In this section, we detail the implementation of our probabilistic approach applied to the <em>ndhB</em> and <em>ndhD</em> genes of the chloroplast of <em>Arabidopsis thaliana</em>.</p>
+<p>The first step in our pipeline is <strong><em>Causal discovery</em></strong>. The graphs in <a href="#fig-CD_ndhB" class="quarto-xref">Figure&nbsp;5</a> and <a href="#fig-CD_ndhD" class="quarto-xref">Figure&nbsp;6</a> represent the discovered DAGs from the working datasets (i.e.&nbsp;after the imputation process described in <a href="#sec-imputation" class="quarto-xref">Section&nbsp;4.1</a>), obtained using the HC, PC, LiNGAM, and NOTEARS algorithms. The HC and PC algorithms are implemented via the <code>pgmpy</code> Python package (cf. <span class="citation" data-cites="pgmpyLibrary"><a href="#ref-pgmpyLibrary" role="doc-biblioref">[27]</a></span>), while LiNGAM is implemented using the <code>causal-learn</code> package (cf. <span class="citation" data-cites="CausalLearnLibrary"><a href="#ref-CausalLearnLibrary" role="doc-biblioref">[28]</a></span>). Implementation details and configuration settings are available at our <a href="https://github.com/cambroise/chloroDAG">GitHub repository</a>.</p>
+<div id="fig-CD_ndhB" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-CD_ndhB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Discovery/DAG_HC_ndhB.png" class="lightbox" data-gallery="CD-ndhB" title="HC"><img src="Figures%20Causal%20Discovery/DAG_HC_ndhB.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>HC</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Discovery/DAG_PC_ndhB.png" class="lightbox" data-gallery="CD-ndhB" title="PC"><img src="Figures%20Causal%20Discovery/DAG_PC_ndhB.png" class="img-fluid figure-img" width="350"></a></p>
+<figcaption>PC</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Discovery/DAG_LiNGAM_ndhB.png" class="lightbox" data-gallery="CD-ndhB" title="LiNGAM"><img src="Figures%20Causal%20Discovery/DAG_LiNGAM_ndhB.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>LiNGAM</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Discovery/DAG_NOTEARS_ndhB.png" class="lightbox" data-gallery="CD-ndhB" title="NOTEARS"><img src="Figures%20Causal%20Discovery/DAG_NOTEARS_ndhB.png" class="img-fluid figure-img" width="350"></a></p>
+<figcaption>NOTEARS</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-CD_ndhB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Causal Discovery for <em>ndhB</em>
+</figcaption>
+</figure>
+</div>
+<div id="fig-CD_ndhD" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-CD_ndhD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Discovery/DAG_HC_ndhD.png" class="lightbox" data-gallery="CD-ndhD" title="HC"><img src="Figures%20Causal%20Discovery/DAG_HC_ndhD.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>HC</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Discovery/DAG_PC_ndhD.png" class="lightbox" data-gallery="CD-ndhD" title="PC"><img src="Figures%20Causal%20Discovery/DAG_PC_ndhD.png" class="img-fluid figure-img" width="350"></a></p>
+<figcaption>PC</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Discovery/DAG_LiNGAM_ndhD.png" class="lightbox" data-gallery="CD-ndhD" title="LiNGAM"><img src="Figures%20Causal%20Discovery/DAG_LiNGAM_ndhD.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>LiNGAM</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Discovery/DAG_NOTEARS_ndhD.png" class="lightbox" data-gallery="CD-ndhD" title="NOTEARS"><img src="Figures%20Causal%20Discovery/DAG_NOTEARS_ndhD.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>NOTEARS</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-CD_ndhD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Causal Discovery for <em>ndhD</em>
+</figcaption>
+</figure>
+</div>
+<section id="sec-quant_CausalEffects" class="level3" data-number="4.2.1">
+<h3 data-number="4.2.1" class="anchored" data-anchor-id="sec-quant_CausalEffects"><span class="header-section-number">4.2.1</span> Interventional reasoning</h3>
+<p>Having identified directed edges through causal discovery, we now turn to the question of whether these edges reflect true causal relationships. To assess this, we apply <strong>interventional reasoning</strong> using the <code>DoWhy</code> Python library <span class="citation" data-cites="dowhy"><a href="#ref-dowhy" role="doc-biblioref">[29]</a></span>, which enables us to estimate the <strong>Average Causal Effect (ACE)</strong> of one event on another.</p>
+<p>The <strong>ACE</strong> quantifies how much the outcome <span class="math inline">\(Y\)</span> would change on average if we were to intervene and set the treatment variable <span class="math inline">\(X\)</span> to 1 versus 0. Formally, it is defined as</p>
+<p><span class="math display">\[
+\text{ACE} := \mathbb{E}[Y \mid \text{do}(X=1)] - \mathbb{E}[Y \mid \text{do}(X=0)].
+\]</span></p>
+<p>In situations where a mediator lies along the causal path from <span class="math inline">\(X\)</span> to <span class="math inline">\(Y\)</span>, we instead focus on estimating the Natural Direct Effect (NDE), which captures the component of the effect not transmitted through the mediator.</p>
+<p>To carry out this analysis, we follow a structured four-step process for each DAG learned from the data:</p>
+<ol type="1">
+<li><p><strong>Model creation</strong>. For each pair of events <span class="math inline">\((A, B)\)</span> connected by a directed edge <span class="math inline">\(A \rightarrow B\)</span>, we construct a <code>CausalModel</code> in <code>DoWhy</code>, designating <span class="math inline">\(A\)</span> as the treatment and <span class="math inline">\(B\)</span> as the outcome.</p></li>
+<li><p><strong>Identification</strong>. Using the structure of the DAG, <code>DoWhy</code> checks whether the causal effect is identifiable from observational data. This step relies on graphical criteria such as the <strong>backdoor</strong> and <strong>frontdoor</strong> conditions derived from do-calculus.</p></li>
+<li><p><strong>Estimation</strong>. If the effect is identifiable, we estimate the ACE using statistical techniques such as linear regression or matching. When mediators are detected, the estimation is refined to isolate the NDE.</p></li>
+<li><p><strong>Validation</strong>. Finally, we retain only those causal links for which the estimated ACE is strictly positive, indicating a likely genuine causal influence. When an NDE is used, this value is reported instead. In both cases, the result is recorded in our summary tables under the label <em>Actual Effect</em>.</p></li>
+</ol>
+<p>Full estimation details are provided in the appendix <a href="#sec-causal_inference_results" class="quarto-xref">Section&nbsp;6.2</a>, specifically in the <em>Causal relations figures</em> (<a href="#fig-CR_ndhB" class="quarto-xref">Figure&nbsp;14</a> and <a href="#fig-CR_ndhD" class="quarto-xref">Figure&nbsp;15</a>), which present the most relevant causal relationships inferred from each of the previously obtained graphs together with the corresponding <em>Actual Effect</em> value. We refer to the available material at our <a href="https://github.com/cambroise/chloroDAG">GitHub repository</a> for further precisions.</p>
+</section>
+<section id="chronology-representation" class="level3" data-number="4.2.2">
+<h3 data-number="4.2.2" class="anchored" data-anchor-id="chronology-representation"><span class="header-section-number">4.2.2</span> Chronology representation</h3>
+<p>The final step in our pipeline is <strong><em>Chronology representation</em></strong>: we construct the <em>maximal causality path</em> based on the previous analysis. Among all valid causal relationships estimated previously, we retain only those with the highest impact in accordance with the topological order of the discovered DAG. The construction of the causal-chronology DAG is carried out in several steps.</p>
+<ol type="i">
+<li><p>We sort the rows of the causal inference tables in descending order of <em>Actual Effect</em>.</p></li>
+<li><p>Among the possible causes for the same ‘Outcome (Y)’, we retain only the one with the greatest <em>Actual Effect</em>. This yields a collection of <em>high-impact</em> cause-effect arrows, which we refer to as <em>strong_causal_relations</em>.</p></li>
+<li><p>We compute the topological order of the discovered DAG and determine the level of each node. This is done using the <code>topological_sorting()</code> function from the <code>igraph</code> Python library (cf. <span class="citation" data-cites="igraphLibrary"><a href="#ref-igraphLibrary" role="doc-biblioref">[30]</a></span>). The nodes are then grouped by their topological level.</p></li>
+<li><p>We sort the directed edges in <em>strong_causal_relations</em> in accordance with the topological levels of their source nodes.</p></li>
+<li><p>We construct the corresponding DAG, thereby defining the chronology.</p></li>
+<li><p>We verify whether all roots of the initial DAG are included in the chronology. If not, they are added as isolated nodes (at topological level <span class="math inline">\(0\)</span>).</p></li>
+<li><p>We add all nodes that were already isolated in the initial DAG as well as those that can become isolated after this construction.</p></li>
+</ol>
+<div id="rem-chron_tree" class="proof remark">
+<p><span class="proof-title"><em>Remark 4</em>. </span>Note that this construction implies that the resulting causal-chronology DAG is a (directed) <em>tree</em>. Indeed, in this procedure each node has at most one incoming edge (since only the strongest causal link is retained for each outcome) and cycles are prevented by the topological ordering.</p>
+</div>
+<p>The application of this method to the <em>ndhB</em> and <em>ndhD</em> genes of the chloroplast of <em>Arabidopsis thaliana</em> yields the maturation timelines represented in their DAG form in <a href="#fig-Chron_ndhB" class="quarto-xref">Figure&nbsp;7</a> and <a href="#fig-Chron_ndhD" class="quarto-xref">Figure&nbsp;8</a>, respectively.</p>
+<div id="fig-Chron_ndhB" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-Chron_ndhB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Chronology/chron_DAG_HC_ndhB.png" class="lightbox" data-gallery="Chron-ndhB" title="HC-model"><img src="Figures%20Causal%20Chronology/chron_DAG_HC_ndhB.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>HC-model</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Chronology/chron_DAG_PC_ndhB.png" class="lightbox" data-gallery="Chron-ndhB" title="PC-model"><img src="Figures%20Causal%20Chronology/chron_DAG_PC_ndhB.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>PC-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Chronology/chron_DAG_LiNGAM_ndhB.png" class="lightbox" data-gallery="Chron-ndhB" title="LiNGAM-model"><img src="Figures%20Causal%20Chronology/chron_DAG_LiNGAM_ndhB.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>LiNGAM-model</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Chronology/chron_DAG_NOTEARS_ndhB.png" class="lightbox" data-gallery="Chron-ndhB" title="NOTEARS-model"><img src="Figures%20Causal%20Chronology/chron_DAG_NOTEARS_ndhB.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>NOTEARS-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-Chron_ndhB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Causal models for maturation chronology for <em>ndhB</em>
+</figcaption>
+</figure>
+</div>
+<div id="fig-Chron_ndhD" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-Chron_ndhD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Chronology/chron_DAG_HC_ndhD.png" class="lightbox" data-gallery="Chron-ndhD" title="HC-model"><img src="Figures%20Causal%20Chronology/chron_DAG_HC_ndhD.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>HC-model</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Chronology/chron_DAG_PC_ndhD.png" class="lightbox" data-gallery="Chron-ndhD" title="PC-model"><img src="Figures%20Causal%20Chronology/chron_DAG_PC_ndhD.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>PC-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Chronology/chron_DAG_LiNGAM_ndhD.png" class="lightbox" data-gallery="Chron-ndhD" title="LiNGAM-model"><img src="Figures%20Causal%20Chronology/chron_DAG_LiNGAM_ndhD.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>LiNGAM-model</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Causal%20Chronology/chron_DAG_NOTEARS_ndhD.png" class="lightbox" data-gallery="Chron-ndhD" title="NOTEARS-model"><img src="Figures%20Causal%20Chronology/chron_DAG_NOTEARS_ndhD.png" class="img-fluid figure-img" width="300"></a></p>
+<figcaption>NOTEARS-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-Chron_ndhD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Causal models for maturation chronology for <em>ndhD</em>
+</figcaption>
+</figure>
+</div>
+<p>These results naturally raise the question: <em>which model should be selected for a given gene?</em></p>
+<p>One approach is to validate each model against both the data and existing expert knowledge. Details of this validation process — including assessments of the causal estimators and the inferred DAG structures — are provided in <a href="#sec-Reliability" class="quarto-xref">Section&nbsp;4.2.4</a>.</p>
+<p>Another complementary strategy is to perform a comparative analysis of the inferred networks across multiple models, aiming to identify <strong>consistently recovered edges</strong>. This consensus-based approach highlights stable relationships—whether directed or undirected—that appear robust to modeling choices. These consensus edges, combined with expert knowledge, can then be used to define a <strong>whitelist</strong> of trusted connections, guiding the construction of a more accurate and interpretable regulatory network.</p>
+<p>For example, the cross-analysis of the causal models for <em>ndhB</em> (<a href="#fig-Chron_ndhB" class="quarto-xref">Figure&nbsp;7</a>) yields the sets of consistently recovered directed and undirected edges represented in <a href="#fig-cross_analysis_ndhB" class="quarto-xref">Figure&nbsp;9</a> as a multigraph.</p>
+<div id="fig-cross_analysis_ndhB" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cross_analysis_ndhB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div id="cell-fig-cross_analysis_ndhB_dir" class="cell quarto-layout-cell-subref quarto-layout-cell" data-message="false" data-execution_count="4" data-ref-parent="fig-cross_analysis_ndhB" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display quarto-layout-cell-subref" data-ref-parent="fig-cross_analysis_ndhB">
+<div id="fig-cross_analysis_ndhb_dir" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-cross_analysis_ndhb_dir-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="chloroDAG_files/figure-html/fig-cross_analysis_ndhb_dir-output-1.png" data-ref-parent="fig-cross_analysis_ndhB" width="470" height="470" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-cross_analysis_ndhb_dir-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Directed edges in at least 2 models for <em>ndhB</em>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div id="cell-fig-cross_analysis_ndhB_undir" class="cell quarto-layout-cell-subref quarto-layout-cell" data-message="false" data-execution_count="5" data-ref-parent="fig-cross_analysis_ndhB" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display quarto-layout-cell-subref" data-ref-parent="fig-cross_analysis_ndhB">
+<div id="fig-cross_analysis_ndhb_undir" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-cross_analysis_ndhb_undir-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="chloroDAG_files/figure-html/fig-cross_analysis_ndhb_undir-output-1.png" data-ref-parent="fig-cross_analysis_ndhB" width="470" height="470" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-cross_analysis_ndhb_undir-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Undirected edges in at least 3 models for <em>ndhB</em>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cross_analysis_ndhB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Cross-analysis for consistently recovered edges within <em>ndhB</em> causal models
+</figcaption>
+</figure>
+</div>
+<p>The cross-analysis of the causal models for <em>ndhD</em> (<a href="#fig-Chron_ndhD" class="quarto-xref">Figure&nbsp;8</a>) yields the sets of consistently recovered directed and undirected edges represented in <a href="#fig-cross_analysis_ndhD" class="quarto-xref">Figure&nbsp;10</a> as a multigraph.</p>
+<div id="fig-cross_analysis_ndhD" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cross_analysis_ndhD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div id="cell-fig-cross_analysis_ndhD_dir" class="cell quarto-layout-cell-subref quarto-layout-cell" data-message="false" data-execution_count="6" data-ref-parent="fig-cross_analysis_ndhD" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display quarto-layout-cell-subref" data-ref-parent="fig-cross_analysis_ndhD">
+<div id="fig-cross_analysis_ndhd_dir" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-cross_analysis_ndhd_dir-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="chloroDAG_files/figure-html/fig-cross_analysis_ndhd_dir-output-1.png" data-ref-parent="fig-cross_analysis_ndhD" width="470" height="470" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-cross_analysis_ndhd_dir-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Directed edges in at least 3 models for <em>ndhD</em>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div id="cell-fig-cross_analysis_ndhD_undir" class="cell quarto-layout-cell-subref quarto-layout-cell" data-message="false" data-execution_count="7" data-ref-parent="fig-cross_analysis_ndhD" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display quarto-layout-cell-subref" data-ref-parent="fig-cross_analysis_ndhD">
+<div id="fig-cross_analysis_ndhd_undir" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-cross_analysis_ndhd_undir-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="chloroDAG_files/figure-html/fig-cross_analysis_ndhd_undir-output-1.png" data-ref-parent="fig-cross_analysis_ndhD" width="470" height="470" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-cross_analysis_ndhd_undir-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Undirected edges in at least 3 models for <em>ndhD</em>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cross_analysis_ndhD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: Cross-analysis for consistently recovered edges within <em>ndhD</em> causal models
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="comparison-with-reference-models" class="level3" data-number="4.2.3">
+<h3 data-number="4.2.3" class="anchored" data-anchor-id="comparison-with-reference-models"><span class="header-section-number">4.2.3</span> Comparison with Reference Models</h3>
+<p>We next compare our inferred maturation timelines with the reference chronologies presented by Guilcher <em>et al.</em> <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span> to assess whether the causal-chronology models provide a superior fit to the observed maturation process.</p>
+<p>The reference timelines for <em>ndhB</em> and <em>ndhD</em>, as defined in <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>, are illustrated in DAG form in <a href="#fig-ref_chrons" class="quarto-xref">Figure&nbsp;11</a>.</p>
+<div id="fig-ref_chrons" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ref_chrons-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Reference%20Graphs/chron_ndhB_Fig6_without_intron.png" class="lightbox" data-gallery="ref-chrons" title="ndhB"><img src="Figures%20Reference%20Graphs/chron_ndhB_Fig6_without_intron.png" class="img-fluid figure-img" data-fig-pos="H" width="300"></a></p>
+<figcaption><em>ndhB</em></figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="Figures%20Reference%20Graphs/chron_ndhD_Fig6.png" class="lightbox" data-gallery="ref-chrons" title="ndhD"><img src="Figures%20Reference%20Graphs/chron_ndhD_Fig6.png" class="img-fluid figure-img" data-fig-pos="H" width="300"></a></p>
+<figcaption><em>ndhD</em></figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ref_chrons-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: Reference models for maturation chronology
+</figcaption>
+</figure>
+</div>
+<div id="rem-intron" class="proof remark">
+<p><span class="proof-title"><em>Remark 5</em>. </span>Note that the reference timeline for <em>ndhB</em>, illustrated in <a href="#fig-ref_chrons" class="quarto-xref">Figure&nbsp;11</a>, does not include the <em>intron</em>. This is because we observed that this event has an abnormally large effect on the others. In fact, all graphs we recovered with the deterministic or causal approach were unfalsifiable; removing this event makes them falsifiable. We decided to remove from the analysis which is further justified because, according to <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>, the intron event occurred at the very end of the timeline.</p>
+</div>
+<p>To conduct the comparison, we evaluated both sets of models (causal-chronology vs.&nbsp;reference) using two standard metrics: the Bayesian Information Criterion (BIC) and the Log-Likelihood. The BIC balances model fit with complexity, penalizing overfitting, while the Log-Likelihood measures how well the model explains the observed data.</p>
+<p>First, for each model we constructed a <code>DiscreteBayesianNetwork</code> using the <code>pgmpy</code> library (<span class="citation" data-cites="pgmpyLibrary"><a href="#ref-pgmpyLibrary" role="doc-biblioref">[27]</a></span>), and estimated its Conditional Probability Distributions via a <code>BayesianEstimator</code>. We then computed <code>structure_score</code> (BIC) and <code>log_likelihood_score</code> on both the reference and causal-chronology networks. Implementation details and configuration settings are available in our <a href="https://github.com/cambroise/chloroDAG">GitHub repository</a>.</p>
+<p>The results, compiled in the charts of <a href="#fig-scores" class="quarto-xref">Figure&nbsp;12</a>, show that at least one causal-chronology model dominates the reference model in both BIC and log-likelihood. Importantly, <em>ndhB</em> shows three exceptions: the HC, PC and LiNGAM causal models underperform compared to the reference. Note however that the PC model is close to the reference model. Furthermore, performance differences are observed across causal discovery algorithms. These exceptions and performance variations are mainly due to the dataset size in terms of the number of variables. For instance, NOTEARS achieved better scores than the other methods for <em>ndhB</em>, but not for <em>ndhD</em>. Conversely, LiNGAM achieved better scores than the other methods for <em>ndhD</em>, but not for <em>ndhB</em>.</p>
+<div id="fig-scores" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-scores-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div id="cell-chart-BIC_scores_ndhB" class="cell quarto-layout-cell" data-execution_count="8" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-bic_scores_ndhb" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-bic_scores_ndhb-output-1.png" width="1334" height="759" class="figure-img"></p>
+<figcaption>BIC scores for <em>ndhB</em></figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div id="cell-chart-logl_scores_ndhB" class="cell quarto-layout-cell" data-execution_count="9" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-logl_scores_ndhb" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-logl_scores_ndhb-output-1.png" width="1334" height="759" class="figure-img"></p>
+<figcaption>Log-likelihood scores for <em>ndhB</em></figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div id="cell-chart-BIC_scores_ndhD" class="cell quarto-layout-cell" data-execution_count="10" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-bic_scores_ndhd" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-bic_scores_ndhd-output-1.png" width="1334" height="759" class="figure-img"></p>
+<figcaption>BIC scores for <em>ndhD</em></figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div id="cell-chart-logl_scores_ndhD" class="cell quarto-layout-cell" data-execution_count="11" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-logl_scores_ndhd" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-logl_scores_ndhd-output-1.png" width="1334" height="759" class="figure-img"></p>
+<figcaption>Log-likelihood scores for <em>ndhD</em></figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scores-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;12: Bar plots of standard metrics for causal-chronology models and reference models: <em>higher is better</em>. Note that the scores (y-axes) are <em>negative values</em>.
+</figcaption>
+</figure>
+</div>
+<p>A complementary metric used to compare our causal-chronology models to the reference is based on the Bayesian network structure itself, as explained in <a href="#sec-fals_tests" class="quarto-xref">Section&nbsp;4.2.4.2</a>. <a href="#fig-falsification_summaries" class="quarto-xref">Figure&nbsp;13</a> summarizes the results of the falsification tests conducted to assess whether the corresponding DAG is accepted or rejected based on its fit with the provided data in terms of conditional independencies. Notably, we observe in <a href="#fig-falsification_summaries" class="quarto-xref">Figure&nbsp;13</a> that there are always at least two causal-chronology models that pass the tests with very high performance. As for the reference model, it is rejected for <em>ndhD</em> and accepted for <em>ndhB</em>.</p>
+</section>
+<section id="sec-Reliability" class="level3" data-number="4.2.4">
+<h3 data-number="4.2.4" class="anchored" data-anchor-id="sec-Reliability"><span class="header-section-number">4.2.4</span> Reliability of the Proposed Methodology</h3>
+<p>To conclude our case study, we assess the <strong>reliability</strong> of the proposed methodology from two complementary perspectives: the stability of the estimated causal effects and the validity of the inferred graph structures.</p>
+<section id="robustness-of-causal-effect-estimates" class="level4" data-number="4.2.4.1">
+<h4 data-number="4.2.4.1" class="anchored" data-anchor-id="robustness-of-causal-effect-estimates"><span class="header-section-number">4.2.4.1</span> Robustness of causal effect estimates</h4>
+<p>The causal effects derived in our inference phase—such as the Average Causal Effect (ACE), Natural Direct Effect (NDE), and Natural Indirect Effect (NIE)—are influenced by modeling decisions, including the structure of the underlying graph and the statistical estimators used. To ensure that our results are not artifacts of specific configurations or assumptions, we subject these estimates to robustness checks.</p>
+<p>These include tests that examine whether effect estimates remain stable under data perturbations, such as subsetting or introducing unrelated variables. Additional checks evaluate whether the estimates degrade appropriately when key assumptions are violated. Taken together, these tests help identify estimates that are likely reliable versus those that may be overly sensitive to modeling choices.</p>
+<p>All reported causal effects (presented in <a href="#fig-CR_ndhB" class="quarto-xref">Figure&nbsp;14</a> and <a href="#fig-CR_ndhD" class="quarto-xref">Figure&nbsp;15</a>) for which such analyses could be conducted passed the relevant robustness checks. Full results are available at our <a href="https://github.com/cambroise/chloroDAG">GitHub repository</a>.</p>
+</section>
+<section id="sec-fals_tests" class="level4" data-number="4.2.4.2">
+<h4 data-number="4.2.4.2" class="anchored" data-anchor-id="sec-fals_tests"><span class="header-section-number">4.2.4.2</span> Consistency of learned graph structures</h4>
+<p>Beyond individual effects, it is essential to validate the overall graphical models produced during causal discovery. A well-specified DAG should capture the key conditional independencies present in the data, and differ meaningfully from random alternatives.</p>
+<p>To this end, we assess whether each graph implies conditional independence relations that are consistent with the observed data, and whether the graph lies in a narrow equivalence class—indicating a structure that is both specific and informative. These tests collectively provide insight into whether the learned DAG captures more than statistical noise or arbitrary correlations. The results (summarized in <a href="#fig-falsification_summaries" class="quarto-xref">Figure&nbsp;13</a>) reveal that there are always at least two causal-chronology models that pass the tests with very high performance.</p>
+<div id="fig-falsification_summaries" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-falsification_summaries-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div id="cell-chart-falsificaton_ndhB" class="cell quarto-layout-cell" data-execution_count="12" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-falsificaton_ndhb" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-falsificaton_ndhb-output-1.png" width="1430" height="855" class="figure-img"></p>
+<figcaption>Falsification tests for <em>ndhB</em></figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div id="cell-chart-falsificaton_ndhD" class="cell quarto-layout-cell" data-execution_count="13" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-falsificaton_ndhd" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-falsificaton_ndhd-output-1.png" width="1430" height="855" class="figure-img"></p>
+<figcaption>Falsification tests for <em>ndhD</em></figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-falsification_summaries-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13: Falsification summaries
+</figcaption>
+</figure>
+</div>
+<div id="rem-falsification" class="proof remark">
+<p><span class="proof-title"><em>Remark 6</em>. </span>Among the four possible (<em>falsifiable</em>, <em>falsified</em>) outcomes:</p>
+<ul>
+<li><p>(T, F): the DAG is likely valid or at least not contradicted by the data.</p></li>
+<li><p>(T, T): the DAG is both specific and contradicted, therefore likely incorrect.</p></li>
+<li><p>(F, F): inconclusive; the structure may be underdetermined by the data.</p></li>
+<li><p>(F, T): an inconsistent outcome, suggesting possible issues with implementation or test assumptions.</p></li>
+</ul>
+<p>It is worth noting that some causal structures—such as chains and forks—are probabilistically indistinguishable. Therefore, even when validation tests are passed, expert interpretation remains essential to resolve ambiguities and confirm causal plausibility.</p>
+<p>For all these reliability assessments, we leverage the tools available in the <code>DoWhy</code> library.</p>
+</div>
+</section>
+</section>
+</section>
+</section>
+<section id="sec-discussion" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Conclusive discussion</h1>
+<p>We have introduced a new methodology for reconstructing the chronology of genetic regulation events, grounded in Pearl’s causal inference framework. This probabilistic approach represents a conceptual shift from earlier work in the field <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>, moving beyond a deterministic viewpoint modeling to explicit reasoning over interventions. Our method captures the complex interplay of maturation events—consistent with prior findings in the specialized literature (e.g., <span class="citation" data-cites="Heterologous_SchmitzEtAl"><a href="#ref-Heterologous_SchmitzEtAl" role="doc-biblioref">[15]</a></span>, <span class="citation" data-cites="LarchMito_MarechalEtAl"><a href="#ref-LarchMito_MarechalEtAl" role="doc-biblioref">[16]</a></span>, <span class="citation" data-cites="ChloroCP31A_TillichEtAl"><a href="#ref-ChloroCP31A_TillichEtAl" role="doc-biblioref">[17]</a></span>, <span class="citation" data-cites="SiteSelective_KarcherBock"><a href="#ref-SiteSelective_KarcherBock" role="doc-biblioref">[18]</a></span>, <span class="citation" data-cites="CisElements_TakenakaNeuwirtBrennicke"><a href="#ref-CisElements_TakenakaNeuwirtBrennicke" role="doc-biblioref">[19]</a></span>)—and provides a well-founded strategy for extracting plausible maturation timelines from transcriptomic datasets.</p>
+<p>The methodology proceeds in three stages: 1. Causal discovery (learning the DAG structure from data), 2. Causal inference (estimating the effects of interventions), and 3. Chronology construction (building a causal timeline as a tree-like graphical model).</p>
+<p>We applied this pipeline to the post-transcriptional regulation of two chloroplast genes, <em>ndhB</em> and <em>ndhD</em>, in <em>Arabidopsis thaliana</em>, generating four alternative causal-chronology models for each gene. Each model corresponds to a distinct causal discovery algorithm. Compared to the reference chronologies <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>, our causal models systematically achieved better fit for <em>ndhD</em>, with NOTEARS standing out for <em>ndhB</em>, according to both the Bayesian Information Criterion (BIC) and the log-likelihood. Furthermore, their robustness was assessed through multiple refutation tests—both on individual causal effect estimates and on the overall DAG structure—demonstrating a consistent advantage over the reference models for <em>ndhD</em>, while the reference model remains valid for <em>ndhB</em>.</p>
+<p>We acknowledge that the causal discovery step introduces an element of uncertainty, particularly in the presence of latent confounders or limited data. As discussed in <a href="#rem-falsification" class="quarto-xref">Remark&nbsp;6</a>, causal structure learning cannot be fully validated from observational data alone. To mitigate this limitation, we complemented standard approaches (HC, PC, LiNGAM) with a continuous optimization-based method: NOTEARS <span class="citation" data-cites="DagsNotears"><a href="#ref-DagsNotears" role="doc-biblioref">[14]</a></span>. Because NOTEARS does not prescribe a principled way to set the <span class="math inline">\(\ell_1\)</span>-regularization parameter—which governs the sparsity of the learned graph—we proposed a two-level stability selection procedure. This approach was benchmarked using the Sachs et al.&nbsp;dataset and shown to improve structural reliability. While <span class="citation" data-cites="DagsNotears"><a href="#ref-DagsNotears" role="doc-biblioref">[14]</a></span> also reports results on this dataset, it provides little insight into parameter tuning or sensitivity.</p>
+<p>A key practical challenge stemmed from the presence of numerous missing values in the dataset. Naively restricting the analysis to fully observed reads would have resulted in an unacceptable loss of statistical power. Likewise, truncating the variable space to ensure more complete rows would restrict biological interpretability and risk introducing structural biases. To overcome this, we adopted a two-step imputation strategy. First, we performed initial imputation using IterativeImputer from scikit-learn. Then, a custom graphical model-based EM algorithm iteratively refined the imputation and the DAG structure. Interestingly, the choice of initial imputation method proved to have minimal impact on the final graphical model.</p>
+<p>Although our contribution is primarily computational, the proposed framework naturally yields testable hypotheses and experimentally verifiable predictions. The estimated causal effects are analogous to those obtained in randomized controlled trials and can therefore inform laboratory experiment design in a principled way. This opens the door to more sophisticated causal analyses, including counterfactual reasoning and targeted <em>what if?</em> questions, thereby enriching the interpretative power of long-read transcriptomic studies. These perspectives are aligned with discussions held with the project leaders of <span class="citation" data-cites="Long_Reads_GuilcherEtAl"><a href="#ref-Long_Reads_GuilcherEtAl" role="doc-biblioref">[1]</a></span>.</p>
+<p>In summary, we present a principled, flexible, and data-driven framework for exploring gene regulation chronology. By combining causal discovery, statistical inference, and domain expertise, it establishes a foundation for reproducible, hypothesis-driven research in molecular biology.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body" data-entry-spacing="0" role="list">
+<div id="ref-Long_Reads_GuilcherEtAl" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[1] </div><div class="csl-right-inline">M. Guilcher <em>et al.</em>, <span>“Full length transcriptome highlights the coordination of plastid transcript processing,”</span> <em>International Journal of Molecular Sciences</em>, vol. 22, no. 11297, 2021.</div>
+</div>
+<div id="ref-Margolin2006" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[2] </div><div class="csl-right-inline">A. A. Margolin <em>et al.</em>, <span>“ARACNE: An algorithm for the reconstruction of gene regulatory networks in a mammalian cellular context,”</span> <em>BMC Bioinformatics</em>, vol. 7, no. Suppl 1, p. S7, 2006, doi: <a href="https://doi.org/10.1186/1471-2105-7-S1-S7">10.1186/1471-2105-7-S1-S7</a>.</div>
+</div>
+<div id="ref-Faith2007" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[3] </div><div class="csl-right-inline">J. J. Faith <em>et al.</em>, <span>“Large-scale mapping and validation of *escherichia coli* transcriptional regulation from a compendium of expression profiles,”</span> <em>PLOS Biology</em>, vol. 5, no. 1, p. e8, 2007, doi: <a href="https://doi.org/10.1371/journal.pbio.0050008">10.1371/journal.pbio.0050008</a>.</div>
+</div>
+<div id="ref-Meyer2008_minet" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[4] </div><div class="csl-right-inline">P. E. Meyer, F. Lafitte, and G. Bontempi, <span>“Minet: An r/bioconductor package for inferring large transcriptional networks using mutual information,”</span> <em>BMC Bioinformatics</em>, vol. 9, p. 461, 2008, doi: <a href="https://doi.org/10.1186/1471-2105-9-461">10.1186/1471-2105-9-461</a>.</div>
+</div>
+<div id="ref-HuynhThu2010" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[5] </div><div class="csl-right-inline">V. A. Huynh-Thu, A. Irrthum, L. Wehenkel, and P. Geurts, <span>“Inferring regulatory networks from expression data using tree-based methods,”</span> <em>PLOS ONE</em>, vol. 5, no. 9, p. e12776, 2010, doi: <a href="https://doi.org/10.1371/journal.pone.0012776">10.1371/journal.pone.0012776</a>.</div>
+</div>
+<div id="ref-Friedman2000" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[6] </div><div class="csl-right-inline">N. Friedman, M. Linial, I. Nachman, and D. Peer, <span>“Using bayesian networks to analyze expression data,”</span> <em>Journal of Computational Biology</em>, vol. 7, no. 3–4, pp. 601–620, 2000, doi: <a href="https://doi.org/10.1089/106652700750050961">10.1089/106652700750050961</a>.</div>
+</div>
+<div id="ref-Pearl2009" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[7] </div><div class="csl-right-inline">J. Pearl, <em>Causality: Models, reasoning and inference</em>, 2nd ed. Cambridge University Press, 2009. Available: <a href="https://projects.illc.uva.nl/cil/uploaded_files/inlineitem/Pearl_2009_Causality.pdf">https://projects.illc.uva.nl/cil/uploaded_files/inlineitem/Pearl_2009_Causality.pdf</a></div>
+</div>
+<div id="ref-HuynhThuGeurts2018" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[8] </div><div class="csl-right-inline">V. A. Huynh-Thu and P. Geurts, <span>“dynGENIE3: Dynamical <span>GENIE3</span> for the inference of gene networks from time series expression data,”</span> <em>Scientific Reports</em>, vol. 8, no. 1, p. 3384, 2018, doi: <a href="https://doi.org/10.1038/s41598-018-21715-0">10.1038/s41598-018-21715-0</a>.</div>
+</div>
+<div id="ref-Murphy2002DBN" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[9] </div><div class="csl-right-inline">K. P. Murphy, <span>“Dynamic bayesian networks: Representation, inference and learning,”</span> PhD thesis, University of California, Berkeley, 2002. Available: <a href="https://www2.eecs.berkeley.edu/Pubs/TechRpts/2002/8174.html">https://www2.eecs.berkeley.edu/Pubs/TechRpts/2002/8174.html</a></div>
+</div>
+<div id="ref-PapiliGao2018SINCERITIES" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[10] </div><div class="csl-right-inline">N. Papili Gao, S. M. Ud-Dean, O. Gandrillon, and R. Gunawan, <span>“SINCERITIES: Inferring gene regulatory networks from time-stamped single cell transcriptional expression profiles,”</span> <em>Bioinformatics</em>, vol. 34, no. 2, pp. 258–266, 2018, doi: <a href="https://doi.org/10.1093/bioinformatics/btx622">10.1093/bioinformatics/btx622</a>.</div>
+</div>
+<div id="ref-Moerman2019GRNBoost2" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[11] </div><div class="csl-right-inline">T. Moerman <em>et al.</em>, <span>“Efficient and scalable inference of gene regulatory networks,”</span> <em>Bioinformatics</em>, vol. 35, no. 12, pp. 2159–2161, 2019, doi: <a href="https://doi.org/10.1093/bioinformatics/bty916">10.1093/bioinformatics/bty916</a>.</div>
+</div>
+<div id="ref-Guilcher2025" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[12] </div><div class="csl-right-inline">J. Guilcher, L. Lezhneva, R. Williams-Carrier, A. Barkan, I. Small, and K. Hammani, <span>“Full length transcriptome highlights the coordination of plastid transcript processing,”</span> <em>The Plant Cell</em>, 2025, Available: <a href="https://hal.inrae.fr/hal-03343771">https://hal.inrae.fr/hal-03343771</a></div>
+</div>
+<div id="ref-CausalityBook_Pearl" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[13] </div><div class="csl-right-inline">J. Pearl, <em>Causality: Models, reasoning, and inference</em>, Second edition. 32 Avenue of the Americas, New York, NY, USA: Cambridge University Press, 2009.</div>
+</div>
+<div id="ref-DagsNotears" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[14] </div><div class="csl-right-inline">X. Zheng, B. Aragam, P. Ravikumar, and E. P. Xing, <span>“DAGs with NO TEARS: Continuous optimization for structure learning,”</span> in <em>Proceedings of the 32nd international conference on neural information processing systems</em>, in NIPS’18. Red Hook, NY, USA: Curran Associates Inc., 2018, pp. 9492–9503.</div>
+</div>
+<div id="ref-Heterologous_SchmitzEtAl" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[15] </div><div class="csl-right-inline">C. Schmitz‐Linneweber, M. Tillich, R. G. Herrmann, and R. M. Maier, <span>“Heterologous, splicing-dependent RNA editing in chloroplasts: Allotetraploidy provides trans-factors,”</span> <em>The EMBO Journal</em>, vol. 20, no. 17, pp. 4874–4883, 2001.</div>
+</div>
+<div id="ref-LarchMito_MarechalEtAl" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[16] </div><div class="csl-right-inline">L. Maréchal-Drouard, R. Kumar, C. Remacle, and I. Small, <span>“RNA editing of larch mitochondrial tRNA his precursors is a prerequisite for processing,”</span> <em>Nucleic Acids Research</em>, vol. 24, no. 16, pp. 3229–3234, 1996.</div>
+</div>
+<div id="ref-ChloroCP31A_TillichEtAl" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[17] </div><div class="csl-right-inline">M. Tillich <em>et al.</em>, <span>“Chloroplast ribonucleoprotein CP31A is required for editing and stability of specific chloroplast mRNAs,”</span> <em>Proceedings of the National Academy of Sciences</em>, vol. 106, no. 14, pp. 6002–6007, 2009.</div>
+</div>
+<div id="ref-SiteSelective_KarcherBock" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[18] </div><div class="csl-right-inline">D. Karcher and R. Bock, <span>“Site-selective inhibition of plastid RNA editing by heat shock and antibiotics: A role for plastid translation in RNA editing,”</span> <em>Nucleic Acids Research</em>, vol. 26, no. 5, pp. 1185–1190, 1998.</div>
+</div>
+<div id="ref-CisElements_TakenakaNeuwirtBrennicke" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[19] </div><div class="csl-right-inline">M. Takenaka, J. Neuwirt, and A. Brennicke, <span>“Complex cis-elements determine an RNA editing site in pea mitochondria,”</span> <em>Nucleic Acids Research</em>, vol. 32, no. 14, pp. 4137–4144, 2004.</div>
+</div>
+<div id="ref-TeyssierKoller2005" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[20] </div><div class="csl-right-inline">M. Teyssier and D. Koller, <span>“Ordering‑based search: A simple and effective algorithm for learning bayesian networks,”</span> in <em>Proceedings of the 21st conference on uncertainty in artificial intelligence (UAI)</em>, 2005, pp. 584–590.</div>
+</div>
+<div id="ref-CausalityPaper_Pearl" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[21] </div><div class="csl-right-inline">J. Pearl, <span>“Causal diagrams for empirical research,”</span> <em>Biometrika</em>, vol. 82, no. 4, pp. 669–688, 1995.</div>
+</div>
+<div id="ref-spirtes1993causation" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[22] </div><div class="csl-right-inline">P. Spirtes, C. Glymour, and R. Scheines, <em>Causation, prediction, and search</em>. New York: Springer-Verlag, 1993.</div>
+</div>
+<div id="ref-shimizu2006linear" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[23] </div><div class="csl-right-inline">S. Shimizu, P. O. Hoyer, A. Hyvärinen, and A. Kerminen, <span>“A linear non-gaussian acyclic model for causal discovery,”</span> <em>Journal of Machine Learning Research</em>, vol. 7, pp. 2003–2030, 2006.</div>
+</div>
+<div id="ref-scikit-learnLibrary" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[24] </div><div class="csl-right-inline">F. Pedregosa <em>et al.</em>, <span>“Scikit-learn: Machine learning in <span>P</span>ython,”</span> <em>Journal of Machine Learning Research</em>, vol. 12, pp. 2825–2830, 2011.</div>
+</div>
+<div id="ref-IntelligentSystemsBook_Pearl" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[25] </div><div class="csl-right-inline">J. Pearl, <em>Probabilistic reasoning in intelligent systems: Networks of plausible inference</em>. Morgan Kaufmann Publishers Inc., 1988.</div>
+</div>
+<div id="ref-LoopyBP" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[26] </div><div class="csl-right-inline">K. P. Murphy, Y. Weiss, and M. I. Jordan, <span>“Loopy belief propagation for approximate inference: An empirical study,”</span> in <em>Proceedings of the fifteenth conference on uncertainty in artificial intelligence</em>, in UAI’99, no. 9. San Francisco, CA, USA: Morgan Kaufmann Publishers Inc., 1999, pp. 467–475.</div>
+</div>
+<div id="ref-pgmpyLibrary" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[27] </div><div class="csl-right-inline">A. Ankan and J. Textor, <span>“Pgmpy: A python toolkit for bayesian networks,”</span> <em>Journal of Machine Learning Research</em>, vol. 25, no. 265, pp. 1–8, 2024.</div>
+</div>
+<div id="ref-CausalLearnLibrary" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[28] </div><div class="csl-right-inline">Y. Zheng <em>et al.</em>, <span>“Causal-learn: Causal discovery in python,”</span> <em>Journal of Machine Learning Research</em>, vol. 25, no. 60, pp. 1–8, 2024.</div>
+</div>
+<div id="ref-dowhy" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[29] </div><div class="csl-right-inline">P. Blöbaum, P. Götz, K. Budhathoki, A. A. Mastakouri, and D. Janzing, <span>“DoWhy‑GCM: An extension of DoWhy for causal inference in graphical causal models,”</span> <em>Journal of Machine Learning Research</em>, vol. 25, no. 147, pp. 1–7, 2024, Available: <a href="http://jmlr.org/papers/v25/22-1258.html">http://jmlr.org/papers/v25/22-1258.html</a></div>
+</div>
+<div id="ref-igraphLibrary" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[30] </div><div class="csl-right-inline">G. Csardi and T. Nepusz, <span>“The igraph software package for complex network research,”</span> <em>InterJournal, Complex Systems</em>, no. 1695, 2006.</div>
+</div>
+<div id="ref-KaiserSipos2021" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[31] </div><div class="csl-right-inline">M. Kaiser and M. Sipos, <span>“<span class="nocase">Unsuitability of NOTEARS for Causal Graph Discovery</span>,”</span> <em>arXiv preprint arXiv:2104.05441</em>, 2021, Available: <a href="https://arxiv.org/abs/2104.05441">https://arxiv.org/abs/2104.05441</a></div>
+</div>
+</div>
+<div style="page-break-after: always;"></div>
+</section>
+
+
+
+<div id="quarto-appendix" class="default"><section id="appendices" class="level1 appendix" data-number="6"><h2 class="anchored quarto-appendix-heading"><span class="header-section-number">6</span> Appendices</h2><div class="quarto-appendix-contents">
+
+<section id="sec-notears" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="sec-notears"><span class="header-section-number">6.1</span> NOTEARS as a causal discovery algorithm</h2>
+<p>We adapted the NOTEARS algorithm <span class="citation" data-cites="DagsNotears"><a href="#ref-DagsNotears" role="doc-biblioref">[14]</a></span> as part of our causal discovery pipeline. NOTEARS formulates the search for a DAG structure as a continuous optimization problem over a weighted adjacency matrix <span class="math inline">\(W\)</span>, avoiding the combinatorial complexity of traditional structure learning. The acyclicity constraint is enforced using a smooth algebraic function, and sparsity is promoted via <span class="math inline">\(\ell_1\)</span> regularization. The result is a differentiable objective that can be optimized using gradient-based methods.</p>
+<p>In our setting, we observed that NOTEARS was highly sensitive to the choice of the regularization parameter <span class="math inline">\(\lambda\)</span>, with small changes leading to radically different graph structures. To address this, we introduced a two-level stability selection strategy (full details are available at our <a href="https://github.com/cambroise/chloroDAG">GitHub repository</a>):</p>
+<ol type="1">
+<li>For a grid of <span class="math inline">\(\lambda\)</span> values, we performed multiple resampling iterations (bootstrap or sub-sampling) of the input data.</li>
+<li>For each configuration, we recorded the set of directed edges returned by NOTEARS.</li>
+<li>We defined a directed edge as <em>stable</em> if it appeared frequently across both resamplings and a contiguous range of regularization parameters, avoiding overly sparse or overly dense configurations.</li>
+</ol>
+<p>This approach allowed us to construct a robust DAG by retaining only stable directed edges. It mitigates two known limitations of NOTEARS: its sensitivity to hyperparameters and the lack of invariance to variable rescaling <span class="citation" data-cites="KaiserSipos2021"><a href="#ref-KaiserSipos2021" role="doc-biblioref">[31]</a></span>.</p>
+<p>While the resulting graphs were more interpretable and robust, it is worth noting that NOTEARS relies on a linear SEM assumption, and its optimization is non-convex. Therefore, learned graphs should be interpreted as hypotheses supported by data, rather than definitive causal claims. As such, we cross-validated NOTEARS outputs with those of HC, PC, and LiNGAM, and report only consistently supported edges in the final causal timelines.</p>
+</section>
+<section id="sec-causal_inference_results" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="sec-causal_inference_results"><span class="header-section-number">6.2</span> Causal inference results</h2>
+<div id="fig-CR_ndhB" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-CR_ndhB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div id="cell-chart-Causality_HC_ndhB" class="cell quarto-layout-cell" data-message="false" data-execution_count="14" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-causality_hc_ndhb" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-causality_hc_ndhb-output-1.png" width="4656" height="4790" class="figure-img"></p>
+<figcaption>Causal effects for the HC-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div id="cell-chart-Causality_PC_ndhB" class="cell quarto-layout-cell" data-message="false" data-execution_count="15" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-causality_pc_ndhb" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-causality_pc_ndhb-output-1.png" width="4656" height="4790" class="figure-img"></p>
+<figcaption>Causal effects for the PC-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div id="cell-chart-Causality_LiNGAM_ndhB" class="cell quarto-layout-cell" data-message="false" data-execution_count="16" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-causality_lingam_ndhb" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-causality_lingam_ndhb-output-1.png" width="4656" height="4790" class="figure-img"></p>
+<figcaption>Causal effects for the LiNGAM-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div id="cell-chart-Causality_NOTEARS_ndhB" class="cell quarto-layout-cell" data-message="false" data-execution_count="17" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-causality_notears_ndhb" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-causality_notears_ndhb-output-1.png" width="4656" height="4790" class="figure-img"></p>
+<figcaption>Causal effects for the NOTEARS-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-CR_ndhB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14: Causal relations for <em>ndhB</em>
+</figcaption>
+</figure>
+</div>
+<div id="fig-CR_ndhD" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-CR_ndhD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div id="cell-chart-Causality_HC_ndhD" class="cell quarto-layout-cell" data-message="false" data-execution_count="18" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-causality_hc_ndhd" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-causality_hc_ndhd-output-1.png" width="4663" height="4790" class="figure-img"></p>
+<figcaption>Causal effects for the HC-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div id="cell-chart-Causality_PC_ndhD" class="cell quarto-layout-cell" data-message="false" data-execution_count="19" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-causality_pc_ndhd" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-causality_pc_ndhd-output-1.png" width="4663" height="4790" class="figure-img"></p>
+<figcaption>Causal effects for the PC-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div id="cell-chart-Causality_LiNGAM_ndhD" class="cell quarto-layout-cell" data-message="false" data-execution_count="20" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-causality_lingam_ndhd" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-causality_lingam_ndhd-output-1.png" width="4663" height="4790" class="figure-img"></p>
+<figcaption>Causal effects for the LiNGAM-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 13.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div id="cell-chart-Causality_NOTEARS_ndhD" class="cell quarto-layout-cell" data-message="false" data-execution_count="21" style="flex-basis: 43.5%;justify-content: flex-start;">
+<div class="cell-output cell-output-display">
+<div id="chart-causality_notears_ndhd" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="chloroDAG_files/figure-html/chart-causality_notears_ndhd-output-1.png" width="4663" height="4790" class="figure-img"></p>
+<figcaption>Causal effects for the NOTEARS-model</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-CR_ndhD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15: Causal relations for <em>ndhD</em>
+</figcaption>
+</figure>
+</div>
+</section>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p><em>Exact Fisher tests</em> (ommiting missing data), to be more precise.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>In fact, most of our causal models propose this arrow (see <a href="#fig-cross_analysis_ndhD" class="quarto-xref">Figure&nbsp;10</a>).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>This initial DAG contains a complex network of <em>all</em> possible (directed) interdependencies between different events.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>This tree reflects, by construction, the <em>relevant</em> (directed) interdependence network between different events. In this sense, it represents the <em>actual</em> causal structure underlying the initial DAG according to the <em>causal minimality principle</em> (cf. <span class="citation" data-cites="CausalityBook_Pearl"><a href="#ref-CausalityBook_Pearl" role="doc-biblioref">[13]</a></span>).<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+          // target, if specified
+          link.setAttribute("target", "_blank");
+          if (link.getAttribute("rel") === null) {
+            link.setAttribute("rel", "noopener");
+          }
+          // default icon
+          link.classList.add("external");
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>

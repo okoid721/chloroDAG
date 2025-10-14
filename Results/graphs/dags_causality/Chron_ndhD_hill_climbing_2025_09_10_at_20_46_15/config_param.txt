@@ -1,0 +1,5 @@
+dataset_name: ndhD
+version_EM_implementation: EM_ndhD_hill_climbing_2025_09_09_at_23_12_57
+discovery_alg: hill_climbing
+estimator_structure: bic-d
+estimator_parameters: BayesianEstimator - K2

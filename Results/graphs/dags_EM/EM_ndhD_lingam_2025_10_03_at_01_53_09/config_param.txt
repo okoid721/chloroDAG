@@ -1,0 +1,4 @@
+dataset_name: ndhD
+discovery_alg: lingam
+estimator_structure: ICA
+estimator_parameters: BayesianEstimator - K2

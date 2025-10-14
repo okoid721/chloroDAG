@@ -1,0 +1,4 @@
+dataset_name: ndhD
+lambda: 0.16666666666666666
+loss_type: logistic
+model_selector: CV and StabSelec with score_connexions

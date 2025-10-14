@@ -1,0 +1,4 @@
+dataset_name: ndhB
+discovery_alg: notears
+estimator_structure: notears_optimization
+estimator_parameters: BayesianEstimator - K2

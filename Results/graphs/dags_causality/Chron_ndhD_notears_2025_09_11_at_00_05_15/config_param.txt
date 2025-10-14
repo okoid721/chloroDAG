@@ -1,0 +1,5 @@
+dataset_name: ndhD
+version_EM_implementation: EM_ndhD_notears_2025_09_10_at_00_21_46
+discovery_alg: notears
+estimator_structure: notears_optimization
+estimator_parameters: BayesianEstimator - K2

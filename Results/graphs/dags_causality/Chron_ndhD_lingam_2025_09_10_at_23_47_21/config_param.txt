@@ -1,0 +1,5 @@
+dataset_name: ndhD
+version_EM_implementation: EM_ndhD_lingam_2025_09_09_at_23_29_18
+discovery_alg: lingam
+estimator_structure: ICA
+estimator_parameters: BayesianEstimator - K2

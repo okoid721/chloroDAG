@@ -1,0 +1,4 @@
+dataset_name: ndhB
+lambda: 0.02
+loss_type: logistic
+model_selector: none

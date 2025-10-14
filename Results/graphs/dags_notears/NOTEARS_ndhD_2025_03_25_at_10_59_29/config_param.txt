@@ -1,0 +1,4 @@
+dataset_name: ndhD
+lambda: None
+loss_type: logistic
+model_selector: StablSelec

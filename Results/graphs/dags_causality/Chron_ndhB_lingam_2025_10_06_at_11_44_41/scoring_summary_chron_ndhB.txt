@@ -1,0 +1,11 @@
+dataset_name: ndhB
+BIC_scores:
+	BIC_ref_chron: [-5023.775842296271]
+	BIC_causal_chron: [-7648.3877894424795]
+	Difference: [2624.611947146209]
+	Best_BIC: [Ref. Chronology_ndhB_Fig6]
+Log-likelihood_scores:
+	Log-likelihood_ref_chron: [-4816.610403749959]
+	Log-likelihood_causal_chron: [-7569.4052988117155]
+	Difference: [2752.7948950617565]
+	Best_Log-likelihood: [Ref. Chronology_ndhB_Fig6]
