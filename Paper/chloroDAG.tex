@@ -460,11 +460,11 @@ ed9 = 96457, ed10 = 96579, ed11 = 96698, ed12 = 97016.}
 \toprule
  & ed1 & ed2 & ed3 & ed4 & ed5 & ed6 & ed7 & ed8 & ed9 & ed10 & ed11 & ed12 & intron\\
 \midrule
-882 & False & True & True & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN\\
-1328 & False & True & True & False & True & True & NaN & NaN & NaN & NaN & NaN & NaN & True\\
-725 & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & True & True & NaN & NaN\\
-999 & False & True & Err & True & True & True & True & False & False & NaN & NaN & NaN & True\\
-264 & False & True & True & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN\\
+995 & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & True & NaN\\
+1820 & NaN & NaN & NaN & NaN & NaN & NaN & True & False & False & True & True & True & Err\\
+1695 & NaN & NaN & NaN & True & True & True & NaN & NaN & NaN & NaN & NaN & NaN & False\\
+971 & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & Err\\
+787 & False & False & True & False & False & False & NaN & NaN & NaN & NaN & NaN & NaN & Err\\
 \bottomrule
 \end{tabular}
 
@@ -484,11 +484,11 @@ defined in terms of their genomic sites: ed1 = 116281, ed2 = 116290, ed3
 \toprule
  & ed1 & ed2 & ed3 & ed4 & ed5\\
 \midrule
-588 & True & True & NaN & NaN & NaN\\
-6209 & NaN & NaN & NaN & NaN & False\\
-1747 & NaN & NaN & NaN & NaN & False\\
-1316 & NaN & NaN & NaN & NaN & False\\
-6981 & NaN & NaN & NaN & NaN & False\\
+7562 & NaN & NaN & NaN & NaN & True\\
+6744 & NaN & NaN & NaN & NaN & False\\
+4832 & True & True & Err & NaN & NaN\\
+1655 & NaN & NaN & NaN & NaN & False\\
+2427 & NaN & NaN & NaN & NaN & False\\
 \bottomrule
 \end{tabular}
 
@@ -821,7 +821,8 @@ To handle the full dataset, our strategy for missing data involves two
 stages of imputation: 1. \textbf{\emph{Initial imputation}}, and 2.
 \textbf{\emph{Graphical model imputation}}. Implementation details and
 configuration settings are available in a
-\href{https://github.com/cambroise/chloroDAG}{GitHub repository}.
+\href{https://github.com/rmartosprieto/chloroDAG.git}{GitHub
+repository}.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -1017,7 +1018,8 @@ algorithms are implemented via the \texttt{pgmpy} Python package (cf.
 using the \texttt{causal-learn} package (cf.
 \citeproc{ref-CausalLearnLibrary}{{[}28{]}}). Implementation details and
 configuration settings are available at our
-\href{https://github.com/cambroise/chloroDAG}{GitHub repository}.
+\href{https://github.com/rmartosprieto/chloroDAG.git}{GitHub
+repository}.
 
 \begin{figure}[H]
 
@@ -1157,8 +1159,8 @@ Figure~\ref{fig-CR_ndhD}), which present the most relevant causal
 relationships inferred from each of the previously obtained graphs
 together with the corresponding \emph{Actual Effect} value. We refer to
 the available material at our
-\href{https://github.com/cambroise/chloroDAG}{GitHub repository} for
-further precisions.
+\href{https://github.com/rmartosprieto/chloroDAG.git}{GitHub repository}
+for further precisions.
 
 \subsubsection{Chronology
 representation}\label{chronology-representation}
@@ -1463,7 +1465,8 @@ computed \texttt{structure\_score} (BIC) and
 \texttt{log\_likelihood\_score} on both the reference and
 causal-chronology networks. Implementation details and configuration
 settings are available in our
-\href{https://github.com/cambroise/chloroDAG}{GitHub repository}.
+\href{https://github.com/rmartosprieto/chloroDAG.git}{GitHub
+repository}.
 
 The results, compiled in the charts of Figure~\ref{fig-scores}, show
 that at least one causal-chronology model dominates the reference model
@@ -1559,7 +1562,8 @@ may be overly sensitive to modeling choices.
 All reported causal effects (presented in Figure~\ref{fig-CR_ndhB} and
 Figure~\ref{fig-CR_ndhD}) for which such analyses could be conducted
 passed the relevant robustness checks. Full results are available at our
-\href{https://github.com/cambroise/chloroDAG}{GitHub repository}.
+\href{https://github.com/rmartosprieto/chloroDAG.git}{GitHub
+repository}.
 
 \paragraph{Consistency of learned graph
 structures}\label{sec-fals_tests}
@@ -1951,7 +1955,8 @@ In our setting, we observed that NOTEARS was highly sensitive to the
 choice of the regularization parameter \(\lambda\), with small changes
 leading to radically different graph structures. To address this, we
 introduced a two-level stability selection strategy (full details are
-available at our \href{https://github.com/cambroise/chloroDAG}{GitHub
+available at our
+\href{https://github.com/rmartosprieto/chloroDAG.git}{GitHub
 repository}):
 
 \begin{enumerate}

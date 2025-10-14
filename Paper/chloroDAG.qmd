@@ -277,7 +277,7 @@ In this section, we apply the full causal inference pipeline described earlier t
 
 An important limitation of the datasets used to study gene regulation in *Arabidopsis thaliana* is the significant presence of missing values. The distribution of these missing entries makes it impractical to restrict the dataset to fully observed rows, as this would drastically reduce the number of usable observations. This issue also affects the first step of our pipeline--***Causal discovery***--. As a result, we must perform imputation jointly with the learning of the corresponding Bayesian network.
 
-To handle the full dataset, our strategy for missing data involves two stages of imputation: 1. ***Initial imputation***, and 2. ***Graphical model imputation***. Implementation details and configuration settings are available in a [GitHub repository](https://github.com/cambroise/chloroDAG).
+To handle the full dataset, our strategy for missing data involves two stages of imputation: 1. ***Initial imputation***, and 2. ***Graphical model imputation***. Implementation details and configuration settings are available in a [GitHub repository](https://github.com/rmartosprieto/chloroDAG.git).
 
 1. __Initial imputation__. First, we perform a preliminary imputaton of missing values in order to have a complete dataset as a starting point for learning the Bayesian Network (via the selected causal discovery algorithm). Technically, the initial imputation is carried out using the `IterativeImputer` class from the `scikit-learn` Python library (cf. [@scikit-learnLibrary]). This method models each feature with missing values as a function of other features, using those estimates for imputation in a round-robin fashion. At each step, one feature (i.e. column) is treated as the target and the others as predictors.
 
@@ -335,7 +335,7 @@ Maturation events are modeled as binary random variables: $1$ if observed during
 
 In this section, we detail the implementation of our probabilistic approach applied to the _ndhB_ and _ndhD_ genes of the chloroplast of _Arabidopsis thaliana_.
 
-The first step in our pipeline is ***Causal discovery***. The graphs in [@fig-CD_ndhB] and [@fig-CD_ndhD] represent the discovered DAGs from the working datasets (i.e. after the imputation process described in [@sec-imputation]), obtained using the HC, PC, LiNGAM, and NOTEARS algorithms. The HC and PC algorithms are implemented via the `pgmpy` Python package (cf. [@pgmpyLibrary]), while LiNGAM is implemented using the `causal-learn` package (cf. [@CausalLearnLibrary]). Implementation details and configuration settings are available at our [GitHub repository](https://github.com/cambroise/chloroDAG).
+The first step in our pipeline is ***Causal discovery***. The graphs in [@fig-CD_ndhB] and [@fig-CD_ndhD] represent the discovered DAGs from the working datasets (i.e. after the imputation process described in [@sec-imputation]), obtained using the HC, PC, LiNGAM, and NOTEARS algorithms. The HC and PC algorithms are implemented via the `pgmpy` Python package (cf. [@pgmpyLibrary]), while LiNGAM is implemented using the `causal-learn` package (cf. [@CausalLearnLibrary]). Implementation details and configuration settings are available at our [GitHub repository](https://github.com/rmartosprieto/chloroDAG.git).
 
 ::: {#fig-CD_ndhB fig-pos="H" layout="[[1,-0.3,1], [1,-0.3,1]]"}
 
@@ -386,7 +386,7 @@ To carry out this analysis, we follow a structured four-step process for each DA
 
 4. **Validation**. Finally, we retain only those causal links for which the estimated ACE is strictly positive, indicating a likely genuine causal influence. When an NDE is used, this value is reported instead. In both cases, the result is recorded in our summary tables under the label _Actual Effect_.
 
-Full estimation details are provided in the appendix [@sec-causal_inference_results], specifically in the _Causal relations figures_ ([@fig-CR_ndhB] and [@fig-CR_ndhD]), which present the most relevant causal relationships inferred from each of the previously obtained graphs together with the corresponding _Actual Effect_ value. We refer to the available material at our [GitHub repository](https://github.com/cambroise/chloroDAG) for further precisions.
+Full estimation details are provided in the appendix [@sec-causal_inference_results], specifically in the _Causal relations figures_ ([@fig-CR_ndhB] and [@fig-CR_ndhD]), which present the most relevant causal relationships inferred from each of the previously obtained graphs together with the corresponding _Actual Effect_ value. We refer to the available material at our [GitHub repository](https://github.com/rmartosprieto/chloroDAG.git) for further precisions.
 
 
 
@@ -803,7 +803,7 @@ Note that the reference timeline for *ndhB*, illustrated in [@fig-ref_chrons], d
 
 To conduct the comparison, we evaluated both sets of models (causal-chronology vs. reference) using two standard metrics: the Bayesian Information Criterion (BIC) and the Log-Likelihood. The BIC balances model fit with complexity, penalizing overfitting, while the Log-Likelihood measures how well the model explains the observed data.
 
-First, for each model we constructed a `DiscreteBayesianNetwork` using the `pgmpy` library ([@pgmpyLibrary]), and estimated its Conditional Probability Distributions via a `BayesianEstimator`. We then computed `structure_score` (BIC) and `log_likelihood_score` on both the reference and causal-chronology networks. Implementation details and configuration settings are available in our [GitHub repository](https://github.com/cambroise/chloroDAG).
+First, for each model we constructed a `DiscreteBayesianNetwork` using the `pgmpy` library ([@pgmpyLibrary]), and estimated its Conditional Probability Distributions via a `BayesianEstimator`. We then computed `structure_score` (BIC) and `log_likelihood_score` on both the reference and causal-chronology networks. Implementation details and configuration settings are available in our [GitHub repository](https://github.com/rmartosprieto/chloroDAG.git).
 
 The results, compiled in the charts of [@fig-scores], show that at least one causal-chronology model dominates the reference model in both BIC and log-likelihood. Importantly, *ndhB* shows three exceptions: the HC, PC and LiNGAM causal models underperform compared to the reference. Note however that the PC model is close to the reference model. Furthermore, performance differences are observed across causal discovery algorithms. These exceptions and performance variations are mainly due to the dataset size in terms of the number of variables. For instance, NOTEARS achieved better scores than the other methods for *ndhB*, but not for *ndhD*. Conversely, LiNGAM achieved better scores than the other methods for *ndhD*, but not for *ndhB*.
 
@@ -1029,7 +1029,7 @@ The causal effects derived in our inference phase—such as the Average Causal E
 
 These include tests that examine whether effect estimates remain stable under data perturbations, such as subsetting or introducing unrelated variables. Additional checks evaluate whether the estimates degrade appropriately when key assumptions are violated. Taken together, these tests help identify estimates that are likely reliable versus those that may be overly sensitive to modeling choices.
 
-All reported causal effects (presented in [@fig-CR_ndhB] and [@fig-CR_ndhD]) for which such analyses could be conducted passed the relevant robustness checks. Full results are available at our [GitHub repository](https://github.com/cambroise/chloroDAG).
+All reported causal effects (presented in [@fig-CR_ndhB] and [@fig-CR_ndhD]) for which such analyses could be conducted passed the relevant robustness checks. Full results are available at our [GitHub repository](https://github.com/rmartosprieto/chloroDAG.git).
 
 #### Consistency of learned graph structures {#sec-fals_tests}
 
@@ -1220,7 +1220,7 @@ In summary, we present a principled, flexible, and data-driven framework for exp
 
 We adapted the NOTEARS algorithm [@DagsNotears] as part of our causal discovery pipeline. NOTEARS formulates the search for a DAG structure as a continuous optimization problem over a weighted adjacency matrix $W$, avoiding the combinatorial complexity of traditional structure learning. The acyclicity constraint is enforced using a smooth algebraic function, and sparsity is promoted via $\ell_1$ regularization. The result is a differentiable objective that can be optimized using gradient-based methods.
 
-In our setting, we observed that NOTEARS was highly sensitive to the choice of the regularization parameter $\lambda$, with small changes leading to radically different graph structures. To address this, we introduced a two-level stability selection strategy (full details are available at our [GitHub repository](https://github.com/cambroise/chloroDAG)):
+In our setting, we observed that NOTEARS was highly sensitive to the choice of the regularization parameter $\lambda$, with small changes leading to radically different graph structures. To address this, we introduced a two-level stability selection strategy (full details are available at our [GitHub repository](https://github.com/rmartosprieto/chloroDAG.git)):
 
 1. For a grid of $\lambda$ values, we performed multiple resampling iterations (bootstrap or sub-sampling) of the input data.
 2. For each configuration, we recorded the set of directed edges returned by NOTEARS.
