@@ -228,7 +228,7 @@ inference, and chronology construction. We apply it to the \emph{ndhB}
 and \emph{ndhD} genes of the chloroplast in \emph{Arabidopsis thaliana},
 generating four alternative maturation timeline models per gene, each
 derived from a different causal discovery algorithm (HC, PC, LiNGAM, or
-NOTEARS).Two methodological challenges are addressed: the presence of
+NOTEARS). Two methodological challenges are addressed: the presence of
 missing data, handled via an EM algorithm that jointly imputes missing
 values and estimates the Bayesian network, and the selection of the
 \(\ell_1\)-regularization parameter in NOTEARS, for which we introduce a
@@ -250,7 +250,7 @@ transcription
 \renewcommand*\contentsname{Table of contents}
 {
 \hypersetup{linkcolor=}
-\setcounter{tocdepth}{2}
+\setcounter{tocdepth}{3}
 \tableofcontents
 }
 
@@ -460,11 +460,11 @@ ed9 = 96457, ed10 = 96579, ed11 = 96698, ed12 = 97016.}
 \toprule
  & ed1 & ed2 & ed3 & ed4 & ed5 & ed6 & ed7 & ed8 & ed9 & ed10 & ed11 & ed12 & intron\\
 \midrule
-995 & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & True & NaN\\
-1820 & NaN & NaN & NaN & NaN & NaN & NaN & True & False & False & True & True & True & Err\\
-1695 & NaN & NaN & NaN & True & True & True & NaN & NaN & NaN & NaN & NaN & NaN & False\\
-971 & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & Err\\
-787 & False & False & True & False & False & False & NaN & NaN & NaN & NaN & NaN & NaN & Err\\
+1582 & NaN & NaN & False & True & Err & Err & True & False & False & False & NaN & NaN & False\\
+1095 & False & False & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN\\
+1495 & False & Err & Err & True & True & True & NaN & NaN & NaN & NaN & NaN & NaN & NaN\\
+1060 & True & False & True & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN & NaN\\
+830 & False & True & True & True & True & True & True & False & False & True & True & True & True\\
 \bottomrule
 \end{tabular}
 
@@ -484,11 +484,11 @@ defined in terms of their genomic sites: ed1 = 116281, ed2 = 116290, ed3
 \toprule
  & ed1 & ed2 & ed3 & ed4 & ed5\\
 \midrule
-7562 & NaN & NaN & NaN & NaN & True\\
-6744 & NaN & NaN & NaN & NaN & False\\
-4832 & True & True & Err & NaN & NaN\\
-1655 & NaN & NaN & NaN & NaN & False\\
-2427 & NaN & NaN & NaN & NaN & False\\
+4624 & True & True & True & True & True\\
+171 & False & False & False & False & NaN\\
+5637 & NaN & NaN & NaN & NaN & False\\
+4685 & True & Err & True & True & True\\
+759 & False & False & True & True & True\\
 \bottomrule
 \end{tabular}
 
