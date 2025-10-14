@@ -32,17 +32,11 @@ The project analyzes long-read sequencing data for the chloroplast genes *ndhB* 
 
 ```
 chloroDAG/
-
 ├── Code/ # Python source code for causal modeling and analysis
-
 ├── Data/ # Input datasets
-
 ├── Paper/ # Quarto source (.qmd), rendered PDF and LaTeX files
-
 ├── README.md # Project overview (this file)
-
 ├── requirements.txt # Python dependencies
-
 └── Results/ # Output DAGs, charts, visualisations, evaluation reports
 ```
 
