@@ -13,9 +13,11 @@ The framework addresses two key methodological challenges:
 
 The resulting causal models consistently outperform reference chronologies in terms of reliability and model fit. Furthermore, the integration of causal reasoning with domain expertise enables the formulation of testable biological hypotheses and the design of targeted experimental interventions.
 
+
 ## 🧬 Data
 
 The project analyzes long-read sequencing data for the chloroplast genes *ndhB* and *ndhD* in _Arabidopsis thaliana_ based on [*Guilcher et al*](https://doi.org/10.3390/ijms222011297).
+
 
 ## 🧪 Key Contributions
 
@@ -29,13 +31,13 @@ The project analyzes long-read sequencing data for the chloroplast genes *ndhB* 
 ## 📁 Repository Structure
 
 chloroDAG/
+├── Code/ # Python source code for causal modeling and analysis
+├── Data/ # Input datasets
+├── Paper/ # Quarto source (.qmd), rendered PDF and LaTeX files
+├── README.md # Project overview (this file)
+├── requirements.txt # Python dependencies
+└── Results/ # Output DAGs, charts, visualisations, evaluation reports
 
-        - Code/ # Python source code for causal modeling and analysis
-        - Data/ # Input datasets
-        - Paper/ # Quarto source (.qmd), rendered PDF and LaTeX files
-        - README.md # Project overview (this file)
-        - requirements.txt # Python dependencies
-        - Results/ # Output DAGs, charts, visualisations, evaluation reports
 
 ## 👤 Authors
 
