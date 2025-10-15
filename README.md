@@ -49,9 +49,16 @@ chloroDAG/
 
 - [Guillem Rigaill](https://orcid.org/0000-0002-7176-7511). Université Paris-Saclay, CNRS, INRAE, Université d'Évry (IPS2, LaMME)
 
-<!-- ## 📚 Citation
+## 📚 Citation
 
 If you use this work, please cite:
 
-> Causal inference of post-transcriptional regulation timelines from long-read sequencing in Arabidopsis thaliana
-[DOI or preprint link, si aplica] -->
+```bibtex
+@article{MARChloroDAG2025,
+  title={{Causal inference of post-transcriptional regulation timelines from long-read sequencing in \textit{Arabidopsis thaliana}}},
+  author={Martos, Rubén and Ambroise, Christophe and Rigaill, Guillem},
+  journal={arXiv preprint https://arxiv.org/abs/2510.12504},
+  year={2025},
+  url={https://doi.org/10.48550/arXiv.2510.12504}
+}
+```
